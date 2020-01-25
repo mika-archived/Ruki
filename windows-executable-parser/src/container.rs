@@ -293,7 +293,7 @@ impl Container {
 
         self.seek_to(SeekFrom::Start(0x3C))?;
 
-        let addr_of_nt_header = i32::from_le_bytes(self.read_long()?);
+        let addr_of_nt_header = self.read_as_i32()?;
 
         Ok(DosContainer {
             addr_of_nt_header,
@@ -309,50 +309,50 @@ impl Container {
         let is_portable_executable = bytes[0] == 0x50 && bytes[1] == 0x45 && bytes[2] == 0x00 && bytes[3] == 0x00;
 
         // file header
-        let machine_raw = u16::from_le_bytes(self.read_word()?);
-        let number_of_sections = u16::from_le_bytes(self.read_word()?);
-        let time_date_stamps = u32::from_le_bytes(self.read_long()?);
-        let pointer_to_symbol_table = u32::from_le_bytes(self.read_long()?);
-        let number_of_symbols = u32::from_le_bytes(self.read_long()?);
-        let size_of_optional_header = u16::from_le_bytes(self.read_word()?);
-        let characteristics = u16::from_le_bytes(self.read_word()?);
+        let machine_raw = self.read_as_u16()?;
+        let number_of_sections = self.read_as_u16()?;
+        let time_date_stamps = self.read_as_u32()?;
+        let pointer_to_symbol_table = self.read_as_u32()?;
+        let number_of_symbols = self.read_as_u32()?;
+        let size_of_optional_header = self.read_as_u16()?;
+        let characteristics = self.read_as_u16()?;
 
         // optional header
-        let arch_raw = u16::from_le_bytes(self.read_word()?);
-        let major_linker_version = u8::from_le_bytes(self.read_byte()?);
-        let minor_linker_version = u8::from_le_bytes(self.read_byte()?);
-        let size_of_code = u32::from_le_bytes(self.read_long()?);
-        let size_of_initialized_data = u32::from_le_bytes(self.read_long()?);
-        let size_of_uninitialized_data = u32::from_le_bytes(self.read_long()?);
-        let address_of_entry_point = u32::from_le_bytes(self.read_long()?);
-        let base_of_code = u32::from_le_bytes(self.read_long()?);
-        let base_of_data = u32::from_le_bytes(self.read_long()?);
-        let image_base = u32::from_le_bytes(self.read_long()?);
-        let section_alignment = u32::from_le_bytes(self.read_long()?);
-        let file_alignment = u32::from_le_bytes(self.read_long()?);
-        let major_operating_system_version = u16::from_le_bytes(self.read_word()?);
-        let minor_operating_system_version = u16::from_le_bytes(self.read_word()?);
-        let major_image_version = u16::from_le_bytes(self.read_word()?);
-        let minor_image_version = u16::from_le_bytes(self.read_word()?);
-        let major_subsystem_version = u16::from_le_bytes(self.read_word()?);
-        let minor_subsystem_version = u16::from_le_bytes(self.read_word()?);
-        let win32_version_value = u32::from_le_bytes(self.read_long()?);
-        let size_of_image = u32::from_le_bytes(self.read_long()?);
-        let size_of_headers = u32::from_le_bytes(self.read_long()?);
-        let checksum = u32::from_le_bytes(self.read_long()?);
-        let subsystem = u16::from_le_bytes(self.read_word()?);
-        let dll_characteristics = u16::from_le_bytes(self.read_word()?);
-        let size_of_stack_reserve = u32::from_le_bytes(self.read_long()?);
-        let size_of_stack_commit = u32::from_le_bytes(self.read_long()?);
-        let size_of_heap_reserve = u32::from_le_bytes(self.read_long()?);
-        let size_of_heap_commit = u32::from_le_bytes(self.read_long()?);
-        let loader_flags = u32::from_le_bytes(self.read_long()?);
-        let number_of_rva_and_sizes = u32::from_le_bytes(self.read_long()?);
+        let arch_raw = self.read_as_u16()?;
+        let major_linker_version = self.read_as_u8()?;
+        let minor_linker_version = self.read_as_u8()?;
+        let size_of_code = self.read_as_u32()?;
+        let size_of_initialized_data = self.read_as_u32()?;
+        let size_of_uninitialized_data = self.read_as_u32()?;
+        let address_of_entry_point = self.read_as_u32()?;
+        let base_of_code = self.read_as_u32()?;
+        let base_of_data = self.read_as_u32()?;
+        let image_base = self.read_as_u32()?;
+        let section_alignment = self.read_as_u32()?;
+        let file_alignment = self.read_as_u32()?;
+        let major_operating_system_version = self.read_as_u16()?;
+        let minor_operating_system_version = self.read_as_u16()?;
+        let major_image_version = self.read_as_u16()?;
+        let minor_image_version = self.read_as_u16()?;
+        let major_subsystem_version = self.read_as_u16()?;
+        let minor_subsystem_version = self.read_as_u16()?;
+        let win32_version_value = self.read_as_u32()?;
+        let size_of_image = self.read_as_u32()?;
+        let size_of_headers = self.read_as_u32()?;
+        let checksum = self.read_as_u32()?;
+        let subsystem = self.read_as_u16()?;
+        let dll_characteristics = self.read_as_u16()?;
+        let size_of_stack_reserve = self.read_as_u32()?;
+        let size_of_stack_commit = self.read_as_u32()?;
+        let size_of_heap_reserve = self.read_as_u32()?;
+        let size_of_heap_commit = self.read_as_u32()?;
+        let loader_flags = self.read_as_u32()?;
+        let number_of_rva_and_sizes = self.read_as_u32()?;
 
         fn create_directory_entry(container: &mut Container) -> Result<DirectoryEntries, failure::Error> {
             Ok(DirectoryEntries {
-                virtual_address: u32::from_le_bytes(container.read_long()?),
-                size: u32::from_le_bytes(container.read_long()?),
+                virtual_address: container.read_as_u32()?,
+                size: container.read_as_u32()?,
             })
         }
 
@@ -451,19 +451,28 @@ impl Container {
         Ok(vector)
     }
 
-    fn read_byte(&mut self) -> Result<[u8; 1], failure::Error> {
+    // UNSIGNED CHAR, BYTE, u8
+    fn read_as_u8(&mut self) -> Result<u8, failure::Error> {
         let bytes = self.read_bytes(1)?;
-        return Ok(bytes[0..1].try_into().unwrap());
+        return Ok(u8::from_le_bytes(bytes[0..1].try_into().unwrap()));
     }
 
-    fn read_word(&mut self) -> Result<[u8; 2], failure::Error> {
+    // UNSIGNED SHORT, WORD, u16
+    fn read_as_u16(&mut self) -> Result<u16, failure::Error> {
         let bytes = self.read_bytes(2)?;
-        return Ok(bytes[0..2].try_into().unwrap());
+        return Ok(u16::from_le_bytes(bytes[0..2].try_into().unwrap()));
     }
 
-    fn read_long(&mut self) -> Result<[u8; 4], failure::Error> {
+    // UNSIGNED INT, DOUBLE WORD, u32
+    fn read_as_u32(&mut self) -> Result<u32, failure::Error> {
         let bytes = self.read_bytes(4)?;
-        return Ok(bytes[0..4].try_into().unwrap());
+        return Ok(u32::from_le_bytes(bytes[0..4].try_into().unwrap()));
+    }
+
+    // INT, i32
+    fn read_as_i32(&mut self) -> Result<i32, failure::Error> {
+        let bytes = self.read_bytes(4)?;
+        return Ok(i32::from_le_bytes(bytes[0..4].try_into().unwrap()));
     }
 
     fn seek_to(&mut self, seek: SeekFrom) -> Result<(), failure::Error> {
