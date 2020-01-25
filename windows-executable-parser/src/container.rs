@@ -244,6 +244,7 @@ impl NtContainer {
 
 #[derive(Debug)]
 pub struct Container {
+    path: String,
     reader: BufReader<File>,
 
     dos_container: Option<DosContainer>,
@@ -262,6 +263,7 @@ impl Container {
         let reader = BufReader::new(executable);
 
         Ok(Container {
+            path: path.to_str().unwrap().to_owned(),
             reader,
 
             // containers
@@ -290,6 +292,10 @@ impl Container {
     fn parse_dos_header(&mut self) -> Result<DosContainer, failure::Error> {
         let bytes = self.read_bytes(2)?;
         let is_windows_executable = bytes[0] == 0x4D && bytes[1] == 0x5A;
+        if !is_windows_executable {
+            let msg = format!("Parsing Error: File `{}` is not DOS compatible file", self.path);
+            return Err(failure::err_msg(msg));
+        }
 
         self.seek_to(SeekFrom::Start(0x3C))?;
 
@@ -307,6 +313,10 @@ impl Container {
         // sig
         let bytes = self.read_bytes(4)?;
         let is_portable_executable = bytes[0] == 0x50 && bytes[1] == 0x45 && bytes[2] == 0x00 && bytes[3] == 0x00;
+        if !is_portable_executable {
+            let msg = format!("Parsing Error: File `{}` is not Windows Portable Executable File", self.path);
+            return Err(failure::err_msg(msg));
+        }
 
         // file header
         let machine_raw = self.read_as_u16()?;
