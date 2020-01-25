@@ -138,10 +138,7 @@ impl NtContainer {
     }
 
     pub fn linker_version(&self) -> String {
-        format!(
-            "{}.{}",
-            self.major_linker_version, self.minor_linker_version
-        )
+        format!("{}.{}", self.major_linker_version, self.minor_linker_version)
     }
 
     pub fn loader_flags(&self) -> u32 {
@@ -170,10 +167,7 @@ impl NtContainer {
     }
 
     pub fn operating_system_version(&self) -> String {
-        format!(
-            "{}.{}",
-            self.major_operating_system_version, self.minor_operating_system_version
-        )
+        format!("{}.{}", self.major_operating_system_version, self.minor_operating_system_version)
     }
 
     pub fn pointer_to_symbol_table(&self) -> u32 {
@@ -308,12 +302,10 @@ impl Container {
     }
 
     fn parse_nt_header(&mut self) -> Result<NtContainer, failure::Error> {
-        #[rustfmt::skip]
         self.seek_to(SeekFrom::Start(self.dos_container.as_ref().unwrap().addr_of_nt_header as u64))?;
 
         // sig
         let bytes = self.read_bytes(4)?;
-        #[rustfmt::skip]
         let is_portable_executable = bytes[0] == 0x50 && bytes[1] == 0x45 && bytes[2] == 0x00 && bytes[3] == 0x00;
 
         // file header
@@ -357,39 +349,30 @@ impl Container {
         let loader_flags = u32::from_le_bytes(self.read_long()?);
         let number_of_rva_and_sizes = u32::from_le_bytes(self.read_long()?);
 
+        fn create_directory_entry(container: &mut Container) -> Result<DirectoryEntries, failure::Error> {
+            Ok(DirectoryEntries {
+                virtual_address: u32::from_le_bytes(container.read_long()?),
+                size: u32::from_le_bytes(container.read_long()?),
+            })
+        }
+
         // directory entries
-        #[rustfmt::skip]
-        let export = DirectoryEntries { virtual_address:  u32::from_le_bytes(self.read_long()?), size:  u32::from_le_bytes(self.read_long()?) };
-        #[rustfmt::skip]
-        let import = DirectoryEntries { virtual_address:  u32::from_le_bytes(self.read_long()?), size:  u32::from_le_bytes(self.read_long()?) };
-        #[rustfmt::skip]
-        let resource = DirectoryEntries { virtual_address:  u32::from_le_bytes(self.read_long()?), size:  u32::from_le_bytes(self.read_long()?) };
-        #[rustfmt::skip]
-        let exception = DirectoryEntries { virtual_address:  u32::from_le_bytes(self.read_long()?), size:  u32::from_le_bytes(self.read_long()?) };
-        #[rustfmt::skip]
-        let security = DirectoryEntries { virtual_address:  u32::from_le_bytes(self.read_long()?), size:  u32::from_le_bytes(self.read_long()?) };
-        #[rustfmt::skip]
-        let basereloc = DirectoryEntries { virtual_address:  u32::from_le_bytes(self.read_long()?), size:  u32::from_le_bytes(self.read_long()?) };
-        #[rustfmt::skip]
-        let debug = DirectoryEntries { virtual_address:  u32::from_le_bytes(self.read_long()?), size:  u32::from_le_bytes(self.read_long()?) };
-        #[rustfmt::skip]
-        let architecture = DirectoryEntries { virtual_address:  u32::from_le_bytes(self.read_long()?), size:  u32::from_le_bytes(self.read_long()?) };
-        #[rustfmt::skip]
-        let global_ptr = DirectoryEntries { virtual_address:  u32::from_le_bytes(self.read_long()?), size:  u32::from_le_bytes(self.read_long()?) };
-        #[rustfmt::skip]
-        let tls = DirectoryEntries { virtual_address:  u32::from_le_bytes(self.read_long()?), size:  u32::from_le_bytes(self.read_long()?) };
-        #[rustfmt::skip]
-        let load_config = DirectoryEntries { virtual_address:  u32::from_le_bytes(self.read_long()?), size:  u32::from_le_bytes(self.read_long()?) };
-        #[rustfmt::skip]
-        let bound_import = DirectoryEntries { virtual_address:  u32::from_le_bytes(self.read_long()?), size:  u32::from_le_bytes(self.read_long()?) };
-        #[rustfmt::skip]
-        let entry_iat = DirectoryEntries { virtual_address:  u32::from_le_bytes(self.read_long()?), size:  u32::from_le_bytes(self.read_long()?) };
-        #[rustfmt::skip]
-        let delay_import = DirectoryEntries { virtual_address:  u32::from_le_bytes(self.read_long()?), size:  u32::from_le_bytes(self.read_long()?) };
-        #[rustfmt::skip]
-        let com_descriptor = DirectoryEntries { virtual_address:  u32::from_le_bytes(self.read_long()?), size:  u32::from_le_bytes(self.read_long()?) };
-        #[rustfmt::skip]
-        let reserved = DirectoryEntries { virtual_address:  u32::from_le_bytes(self.read_long()?), size:  u32::from_le_bytes(self.read_long()?) };
+        let export = create_directory_entry(self)?;
+        let import = create_directory_entry(self)?;
+        let resource = create_directory_entry(self)?;
+        let exception = create_directory_entry(self)?;
+        let security = create_directory_entry(self)?;
+        let basereloc = create_directory_entry(self)?;
+        let debug = create_directory_entry(self)?;
+        let architecture = create_directory_entry(self)?;
+        let global_ptr = create_directory_entry(self)?;
+        let tls = create_directory_entry(self)?;
+        let load_config = create_directory_entry(self)?;
+        let bound_import = create_directory_entry(self)?;
+        let entry_iat = create_directory_entry(self)?;
+        let delay_import = create_directory_entry(self)?;
+        let com_descriptor = create_directory_entry(self)?;
+        let reserved = create_directory_entry(self)?;
 
         Ok(NtContainer {
             address_of_entry_point,
