@@ -3,6 +3,8 @@ use std::fs::File;
 use std::io::{BufReader, Read, Seek, SeekFrom};
 use std::path::Path;
 
+const X64_MACHINE: u16 = 0x7664;
+
 #[derive(Debug)]
 pub struct DosContainer {
     addr_of_nt_header: i32,
@@ -58,7 +60,7 @@ pub struct NtContainer {
     data_dictionary: [DirectoryEntries; 16],
     dll_characteristics: u16,
     file_alignment: u32,
-    image_base: u32,
+    image_base: u64,
     loader_flags: u32,
     major_image_version: u16,
     major_linker_version: u8,
@@ -72,12 +74,12 @@ pub struct NtContainer {
     section_alignment: u32,
     size_of_code: u32,
     size_of_headers: u32,
-    size_of_heap_commit: u32,
-    size_of_heap_reserve: u32,
+    size_of_heap_commit: u64,
+    size_of_heap_reserve: u64,
     size_of_image: u32,
     size_of_initialized_data: u32,
-    size_of_stack_commit: u32,
-    size_of_stack_reserve: u32,
+    size_of_stack_commit: u64,
+    size_of_stack_reserve: u64,
     size_of_uninitialized_data: u32,
     subsystem: u16,
     win32_version_value: u32,
@@ -121,7 +123,7 @@ impl NtContainer {
         self.file_alignment
     }
 
-    pub fn image_base(&self) -> u32 {
+    pub fn image_base(&self) -> u64 {
         self.image_base
     }
 
@@ -197,11 +199,11 @@ impl NtContainer {
         self.size_of_headers
     }
 
-    pub fn size_of_heap_commit(&self) -> u32 {
+    pub fn size_of_heap_commit(&self) -> u64 {
         self.size_of_heap_commit
     }
 
-    pub fn size_of_heap_reserve(&self) -> u32 {
+    pub fn size_of_heap_reserve(&self) -> u64 {
         self.size_of_heap_reserve
     }
 
@@ -217,11 +219,11 @@ impl NtContainer {
         self.size_of_optional_header
     }
 
-    pub fn size_of_stack_commit(&self) -> u32 {
+    pub fn size_of_stack_commit(&self) -> u64 {
         self.size_of_stack_commit
     }
 
-    pub fn size_of_stack_reserve(&self) -> u32 {
+    pub fn size_of_stack_reserve(&self) -> u64 {
         self.size_of_stack_reserve
     }
 
@@ -336,8 +338,14 @@ impl Container {
         let size_of_uninitialized_data = self.read_as_u32()?;
         let address_of_entry_point = self.read_as_u32()?;
         let base_of_code = self.read_as_u32()?;
-        let base_of_data = self.read_as_u32()?;
-        let image_base = self.read_as_u32()?;
+        let base_of_data = match machine {
+            X64_MACHINE => 0, // if machine is x64, this data is stripped
+            _ => self.read_as_u32()?,
+        };
+        let image_base = match machine {
+            X64_MACHINE => self.read_as_u64()?, // x64
+            _ => self.read_as_u32()? as u64,
+        };
         let section_alignment = self.read_as_u32()?;
         let file_alignment = self.read_as_u32()?;
         let major_operating_system_version = self.read_as_u16()?;
@@ -352,10 +360,10 @@ impl Container {
         let checksum = self.read_as_u32()?;
         let subsystem = self.read_as_u16()?;
         let dll_characteristics = self.read_as_u16()?;
-        let size_of_stack_reserve = self.read_as_u32()?;
-        let size_of_stack_commit = self.read_as_u32()?;
-        let size_of_heap_reserve = self.read_as_u32()?;
-        let size_of_heap_commit = self.read_as_u32()?;
+        let size_of_stack_reserve = if machine == X64_MACHINE { self.read_as_u64()? } else { self.read_as_u32()? as u64 };
+        let size_of_stack_commit = if machine == X64_MACHINE { self.read_as_u64()? } else { self.read_as_u32()? as u64 };
+        let size_of_heap_reserve = if machine == X64_MACHINE { self.read_as_u64()? } else { self.read_as_u32()? as u64 };
+        let size_of_heap_commit = if machine == X64_MACHINE { self.read_as_u64()? } else { self.read_as_u32()? as u64 };
         let loader_flags = self.read_as_u32()?;
         let number_of_rva_and_sizes = self.read_as_u32()?;
 
