@@ -21,6 +21,6 @@ fn main() -> Result<(), failure::Error> {
   let container = Container::create(&path)?;
   container.parse()?;
 
-  container.is_windows_executable(); // => true
+  println!("{}", container.dos_container().unwrap().is_windows_executable()); // => true
 }
 ```
