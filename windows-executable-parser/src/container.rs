@@ -59,7 +59,7 @@ pub struct NtContainer {
     base_of_code: u32,
     base_of_data: u32,
     checksum: u32,
-    data_dictionary: [DirectoryEntries; 16],
+    data_directory: [DirectoryEntries; 16],
     dll_characteristics: u16,
     file_alignment: u32,
     image_base: u64,
@@ -112,8 +112,8 @@ impl NtContainer {
         self.checksum
     }
 
-    pub fn data_dictionary(&self) -> &[DirectoryEntries; 16] {
-        &self.data_dictionary
+    pub fn data_directories(&self) -> &[DirectoryEntries; 16] {
+        &self.data_directory
     }
 
     pub fn dll_characteristics(&self) -> u16 {
@@ -472,7 +472,7 @@ impl Container {
             base_of_code,
             base_of_data,
             characteristics,
-            data_dictionary: [
+            data_directory: [
                 export,
                 import,
                 resource,
