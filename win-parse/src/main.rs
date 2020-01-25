@@ -146,19 +146,20 @@ fn print_optional_headers(container: &Container) -> () {
         }
     }
     let mut characteristics: Vec<String> = Vec::new();
-    add_if_includes(nt_container.dll_characteristics(), 0x0001, &mut characteristics, "RESERVED");
-    add_if_includes(nt_container.dll_characteristics(), 0x0002, &mut characteristics, "RESERVED");
-    add_if_includes(nt_container.dll_characteristics(), 0x0004, &mut characteristics, "RESERVED");
-    add_if_includes(nt_container.dll_characteristics(), 0x0008, &mut characteristics, "RESERVED");
+    add_if_includes(nt_container.dll_characteristics(), 0x0001, &mut characteristics, "IMAGE_DLLCHARACTERISTICS_PROCESS_INIT");
+    add_if_includes(nt_container.dll_characteristics(), 0x0002, &mut characteristics, "IMAGE_DLLCHARACTERISTICS_PROCESS_TERM");
+    add_if_includes(nt_container.dll_characteristics(), 0x0004, &mut characteristics, "IMAGE_DLLCHARACTERISTICS_THREAD_INIT");
+    add_if_includes(nt_container.dll_characteristics(), 0x0008, &mut characteristics, "IMAGE_DLLCHARACTERISTICS_THREAD_TERM");
+    add_if_includes(nt_container.dll_characteristics(), 0x0020, &mut characteristics, "IMAGE_DLLCHARACTERISTICS_HIGH_ENTROPY_VA");
     add_if_includes(nt_container.dll_characteristics(), 0x0040, &mut characteristics, "IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE");
     add_if_includes(nt_container.dll_characteristics(), 0x0080, &mut characteristics, "IMAGE_DLLCHARACTERISTICS_FORCE_INTEGRITY");
     add_if_includes(nt_container.dll_characteristics(), 0x0100, &mut characteristics, "IMAGE_DLLCHARACTERISTICS_NX_COMPAT");
     add_if_includes(nt_container.dll_characteristics(), 0x0200, &mut characteristics, "IMAGE_DLLCHARACTERISTICS_NO_ISOLATION");
     add_if_includes(nt_container.dll_characteristics(), 0x0400, &mut characteristics, "IMAGE_DLLCHARACTERISTICS_NO_SEH");
     add_if_includes(nt_container.dll_characteristics(), 0x0800, &mut characteristics, "IMAGE_DLLCHARACTERISTICS_NO_BIND");
-    add_if_includes(nt_container.dll_characteristics(), 0x1000, &mut characteristics, "RESERVED");
+    add_if_includes(nt_container.dll_characteristics(), 0x1000, &mut characteristics, "IMAGE_DLLCHARACTERISTICS_APP_CONTAINER");
     add_if_includes(nt_container.dll_characteristics(), 0x2000, &mut characteristics, "IMAGE_DLLCHARACTERISTICS_WDM_DRIVER");
-    add_if_includes(nt_container.dll_characteristics(), 0x4000, &mut characteristics, "RESERVED");
+    add_if_includes(nt_container.dll_characteristics(), 0x4000, &mut characteristics, "IMAGE_DLLCHARACTERISTICS_GUARD_CF");
     #[rustfmt::skip]
     add_if_includes(nt_container.dll_characteristics(), 0x8000, &mut characteristics, "IMAGE_DLLCHARACTERISTICS_TERMINAL_SERVER_AWARE");
 
