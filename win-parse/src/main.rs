@@ -66,28 +66,28 @@ fn print_file_headers(container: &Container) -> () {
         _ => "Unknown",
     };
 
-    fn add_if_valid(characteristics: u16, flag: u16, vector: &mut Vec<String>, text: &str) -> () {
+    fn add_if_includes(characteristics: u16, flag: u16, vector: &mut Vec<String>, text: &str) -> () {
         if characteristics & flag == flag {
             vector.push(text.to_owned());
         }
     }
 
     let mut characteristics: Vec<String> = Vec::new();
-    add_if_valid(nt_container.characteristics(), 0x0001, &mut characteristics, "IMAGE_FILE_RELOCS_STRIPPED");
-    add_if_valid(nt_container.characteristics(), 0x0002, &mut characteristics, "IMAGE_FILE_EXECUTABLE_IMAGE");
-    add_if_valid(nt_container.characteristics(), 0x0004, &mut characteristics, "IMAGE_FILE_LINE_NUMS_STRIPPED");
-    add_if_valid(nt_container.characteristics(), 0x0008, &mut characteristics, "IMAGE_FILE_LOCAL_SYMS_STRIPPED");
-    add_if_valid(nt_container.characteristics(), 0x0010, &mut characteristics, "IMAGE_FILE_AGGRESIVE_WS_TRIM");
-    add_if_valid(nt_container.characteristics(), 0x0020, &mut characteristics, "IMAGE_FILE_LARGE_ADDRESS_AWARE");
-    add_if_valid(nt_container.characteristics(), 0x0080, &mut characteristics, "IMAGE_FILE_BYTES_REVERSED_LO");
-    add_if_valid(nt_container.characteristics(), 0x0100, &mut characteristics, "IMAGE_FILE_32BIT_MACHINE");
-    add_if_valid(nt_container.characteristics(), 0x0200, &mut characteristics, "IMAGE_FILE_DEBUG_STRIPPED");
-    add_if_valid(nt_container.characteristics(), 0x0400, &mut characteristics, "IMAGE_FILE_REMOVABLE_RUN_FROM_SWAP");
-    add_if_valid(nt_container.characteristics(), 0x0800, &mut characteristics, "IMAGE_FILE_NET_RUN_FROM_SWAP");
-    add_if_valid(nt_container.characteristics(), 0x1000, &mut characteristics, "IMAGE_FILE_SYSTEM");
-    add_if_valid(nt_container.characteristics(), 0x2000, &mut characteristics, "IMAGE_FILE_DLL");
-    add_if_valid(nt_container.characteristics(), 0x4000, &mut characteristics, "IMAGE_FILE_UP_SYSTEM_ONLY");
-    add_if_valid(nt_container.characteristics(), 0x8000, &mut characteristics, "IMAGE_FILE_BYTES_REVERSED_HI");
+    add_if_includes(nt_container.characteristics(), 0x0001, &mut characteristics, "IMAGE_FILE_RELOCS_STRIPPED");
+    add_if_includes(nt_container.characteristics(), 0x0002, &mut characteristics, "IMAGE_FILE_EXECUTABLE_IMAGE");
+    add_if_includes(nt_container.characteristics(), 0x0004, &mut characteristics, "IMAGE_FILE_LINE_NUMS_STRIPPED");
+    add_if_includes(nt_container.characteristics(), 0x0008, &mut characteristics, "IMAGE_FILE_LOCAL_SYMS_STRIPPED");
+    add_if_includes(nt_container.characteristics(), 0x0010, &mut characteristics, "IMAGE_FILE_AGGRESIVE_WS_TRIM");
+    add_if_includes(nt_container.characteristics(), 0x0020, &mut characteristics, "IMAGE_FILE_LARGE_ADDRESS_AWARE");
+    add_if_includes(nt_container.characteristics(), 0x0080, &mut characteristics, "IMAGE_FILE_BYTES_REVERSED_LO");
+    add_if_includes(nt_container.characteristics(), 0x0100, &mut characteristics, "IMAGE_FILE_32BIT_MACHINE");
+    add_if_includes(nt_container.characteristics(), 0x0200, &mut characteristics, "IMAGE_FILE_DEBUG_STRIPPED");
+    add_if_includes(nt_container.characteristics(), 0x0400, &mut characteristics, "IMAGE_FILE_REMOVABLE_RUN_FROM_SWAP");
+    add_if_includes(nt_container.characteristics(), 0x0800, &mut characteristics, "IMAGE_FILE_NET_RUN_FROM_SWAP");
+    add_if_includes(nt_container.characteristics(), 0x1000, &mut characteristics, "IMAGE_FILE_SYSTEM");
+    add_if_includes(nt_container.characteristics(), 0x2000, &mut characteristics, "IMAGE_FILE_DLL");
+    add_if_includes(nt_container.characteristics(), 0x4000, &mut characteristics, "IMAGE_FILE_UP_SYSTEM_ONLY");
+    add_if_includes(nt_container.characteristics(), 0x8000, &mut characteristics, "IMAGE_FILE_BYTES_REVERSED_HI");
 
     println!(
         "
@@ -140,27 +140,27 @@ fn print_optional_headers(container: &Container) -> () {
         _ => "Unknown",
     };
 
-    fn add_if_valid(characteristics: u16, flag: u16, vector: &mut Vec<String>, text: &str) -> () {
+    fn add_if_includes(characteristics: u16, flag: u16, vector: &mut Vec<String>, text: &str) -> () {
         if characteristics & flag == flag {
             vector.push(text.to_owned());
         }
     }
     let mut characteristics: Vec<String> = Vec::new();
-    add_if_valid(nt_container.dll_characteristics(), 0x0001, &mut characteristics, "RESERVED");
-    add_if_valid(nt_container.dll_characteristics(), 0x0002, &mut characteristics, "RESERVED");
-    add_if_valid(nt_container.dll_characteristics(), 0x0004, &mut characteristics, "RESERVED");
-    add_if_valid(nt_container.dll_characteristics(), 0x0008, &mut characteristics, "RESERVED");
-    add_if_valid(nt_container.dll_characteristics(), 0x0040, &mut characteristics, "IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE");
-    add_if_valid(nt_container.dll_characteristics(), 0x0080, &mut characteristics, "IMAGE_DLLCHARACTERISTICS_FORCE_INTEGRITY");
-    add_if_valid(nt_container.dll_characteristics(), 0x0100, &mut characteristics, "IMAGE_DLLCHARACTERISTICS_NX_COMPAT");
-    add_if_valid(nt_container.dll_characteristics(), 0x0200, &mut characteristics, "IMAGE_DLLCHARACTERISTICS_NO_ISOLATION");
-    add_if_valid(nt_container.dll_characteristics(), 0x0400, &mut characteristics, "IMAGE_DLLCHARACTERISTICS_NO_SEH");
-    add_if_valid(nt_container.dll_characteristics(), 0x0800, &mut characteristics, "IMAGE_DLLCHARACTERISTICS_NO_BIND");
-    add_if_valid(nt_container.dll_characteristics(), 0x1000, &mut characteristics, "RESERVED");
-    add_if_valid(nt_container.dll_characteristics(), 0x2000, &mut characteristics, "IMAGE_DLLCHARACTERISTICS_WDM_DRIVER");
-    add_if_valid(nt_container.dll_characteristics(), 0x4000, &mut characteristics, "RESERVED");
+    add_if_includes(nt_container.dll_characteristics(), 0x0001, &mut characteristics, "RESERVED");
+    add_if_includes(nt_container.dll_characteristics(), 0x0002, &mut characteristics, "RESERVED");
+    add_if_includes(nt_container.dll_characteristics(), 0x0004, &mut characteristics, "RESERVED");
+    add_if_includes(nt_container.dll_characteristics(), 0x0008, &mut characteristics, "RESERVED");
+    add_if_includes(nt_container.dll_characteristics(), 0x0040, &mut characteristics, "IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE");
+    add_if_includes(nt_container.dll_characteristics(), 0x0080, &mut characteristics, "IMAGE_DLLCHARACTERISTICS_FORCE_INTEGRITY");
+    add_if_includes(nt_container.dll_characteristics(), 0x0100, &mut characteristics, "IMAGE_DLLCHARACTERISTICS_NX_COMPAT");
+    add_if_includes(nt_container.dll_characteristics(), 0x0200, &mut characteristics, "IMAGE_DLLCHARACTERISTICS_NO_ISOLATION");
+    add_if_includes(nt_container.dll_characteristics(), 0x0400, &mut characteristics, "IMAGE_DLLCHARACTERISTICS_NO_SEH");
+    add_if_includes(nt_container.dll_characteristics(), 0x0800, &mut characteristics, "IMAGE_DLLCHARACTERISTICS_NO_BIND");
+    add_if_includes(nt_container.dll_characteristics(), 0x1000, &mut characteristics, "RESERVED");
+    add_if_includes(nt_container.dll_characteristics(), 0x2000, &mut characteristics, "IMAGE_DLLCHARACTERISTICS_WDM_DRIVER");
+    add_if_includes(nt_container.dll_characteristics(), 0x4000, &mut characteristics, "RESERVED");
     #[rustfmt::skip]
-    add_if_valid(nt_container.dll_characteristics(), 0x8000, &mut characteristics, "IMAGE_DLLCHARACTERISTICS_TERMINAL_SERVER_AWARE");
+    add_if_includes(nt_container.dll_characteristics(), 0x8000, &mut characteristics, "IMAGE_DLLCHARACTERISTICS_TERMINAL_SERVER_AWARE");
 
     println!(
         "
@@ -290,55 +290,55 @@ fn print_section_headers(container: &Container) -> () {
     for i in 0..nt_container.number_of_sections() {
         let section_header = &section_headers[i as usize];
 
-        fn add_if_valid(flags: u32, flag: u32, vector: &mut Vec<String>, text: &str) -> () {
+        fn add_if_includes(flags: u32, flag: u32, vector: &mut Vec<String>, text: &str) -> () {
             if flags & flag == flag {
                 vector.push(text.to_owned());
             }
         }
         let mut flags: Vec<String> = Vec::new();
-        add_if_valid(section_header.characteristics(), 0x00000001, &mut flags, "RESERVED");
-        add_if_valid(section_header.characteristics(), 0x00000001, &mut flags, "RESERVED");
-        add_if_valid(section_header.characteristics(), 0x00000002, &mut flags, "RESERVED");
-        add_if_valid(section_header.characteristics(), 0x00000004, &mut flags, "RESERVED");
-        add_if_valid(section_header.characteristics(), 0x00000008, &mut flags, "IMAGE_SCN_TYPE_NO_PAD");
-        add_if_valid(section_header.characteristics(), 0x00000010, &mut flags, "RESERVED");
-        add_if_valid(section_header.characteristics(), 0x00000020, &mut flags, "IMAGE_SCN_CNT_CODE");
-        add_if_valid(section_header.characteristics(), 0x00000040, &mut flags, "IMAGE_SCN_CNT_INITIALIZED_DATA");
-        add_if_valid(section_header.characteristics(), 0x00000080, &mut flags, "IMAGE_SCN_CNT_UNINITIALIZED_DATA");
-        add_if_valid(section_header.characteristics(), 0x00000100, &mut flags, "IMAGE_SCN_LNK_OTHER");
-        add_if_valid(section_header.characteristics(), 0x00000200, &mut flags, "IMAGE_SCN_LNK_INFO");
-        add_if_valid(section_header.characteristics(), 0x00000400, &mut flags, "RESERVED");
-        add_if_valid(section_header.characteristics(), 0x00000800, &mut flags, "IMAGE_SCN_LNK_REMOVE");
-        add_if_valid(section_header.characteristics(), 0x00001000, &mut flags, "IMAGE_SCN_LNK_COMDAT");
-        add_if_valid(section_header.characteristics(), 0x00002000, &mut flags, "RESERVED");
-        add_if_valid(section_header.characteristics(), 0x00004000, &mut flags, "IMAGE_SCN_NO_DEFER_SPEC_EXC");
-        add_if_valid(section_header.characteristics(), 0x00008000, &mut flags, "IMAGE_SCN_GPREL");
-        add_if_valid(section_header.characteristics(), 0x00010000, &mut flags, "RESERVED");
-        add_if_valid(section_header.characteristics(), 0x00020000, &mut flags, "IMAGE_SCN_MEM_PURGEABLE");
-        add_if_valid(section_header.characteristics(), 0x00040000, &mut flags, "IMAGE_SCN_MEM_LOCKED");
-        add_if_valid(section_header.characteristics(), 0x00080000, &mut flags, "IMAGE_SCN_MEM_PRELOAD");
-        add_if_valid(section_header.characteristics(), 0x00100000, &mut flags, "IMAGE_SCN_ALIGN_1BYTES");
-        add_if_valid(section_header.characteristics(), 0x00200000, &mut flags, "IMAGE_SCN_ALIGN_2BYTES");
-        add_if_valid(section_header.characteristics(), 0x00300000, &mut flags, "IMAGE_SCN_ALIGN_4BYTES");
-        add_if_valid(section_header.characteristics(), 0x00400000, &mut flags, "IMAGE_SCN_ALIGN_8BYTES");
-        add_if_valid(section_header.characteristics(), 0x00500000, &mut flags, "IMAGE_SCN_ALIGN_16BYTES");
-        add_if_valid(section_header.characteristics(), 0x00600000, &mut flags, "IMAGE_SCN_ALIGN_32BYTES");
-        add_if_valid(section_header.characteristics(), 0x00700000, &mut flags, "IMAGE_SCN_ALIGN_64BYTES");
-        add_if_valid(section_header.characteristics(), 0x00800000, &mut flags, "IMAGE_SCN_ALIGN_128BYTES");
-        add_if_valid(section_header.characteristics(), 0x00900000, &mut flags, "IMAGE_SCN_ALIGN_256BYTES");
-        add_if_valid(section_header.characteristics(), 0x00A00000, &mut flags, "IMAGE_SCN_ALIGN_512BYTES");
-        add_if_valid(section_header.characteristics(), 0x00B00000, &mut flags, "IMAGE_SCN_ALIGN_1024BYTES");
-        add_if_valid(section_header.characteristics(), 0x00C00000, &mut flags, "IMAGE_SCN_ALIGN_2048BYTES");
-        add_if_valid(section_header.characteristics(), 0x00D00000, &mut flags, "IMAGE_SCN_ALIGN_4096BYTES");
-        add_if_valid(section_header.characteristics(), 0x00E00000, &mut flags, "IMAGE_SCN_ALIGN_8192BYTES");
-        add_if_valid(section_header.characteristics(), 0x01000000, &mut flags, "IMAGE_SCN_LNK_NRELOC_OVFL");
-        add_if_valid(section_header.characteristics(), 0x02000000, &mut flags, "IMAGE_SCN_MEM_DISCARDABLE");
-        add_if_valid(section_header.characteristics(), 0x04000000, &mut flags, "IMAGE_SCN_MEM_NOT_CACHED");
-        add_if_valid(section_header.characteristics(), 0x08000000, &mut flags, "IMAGE_SCN_MEM_NOT_PAGED");
-        add_if_valid(section_header.characteristics(), 0x10000000, &mut flags, "IMAGE_SCN_MEM_SHARED");
-        add_if_valid(section_header.characteristics(), 0x20000000, &mut flags, "IMAGE_SCN_MEM_EXECUTE");
-        add_if_valid(section_header.characteristics(), 0x40000000, &mut flags, "IMAGE_SCN_MEM_READ");
-        add_if_valid(section_header.characteristics(), 0x80000000, &mut flags, "IMAGE_SCN_MEM_WRITE");
+        add_if_includes(section_header.characteristics(), 0x00000001, &mut flags, "RESERVED");
+        add_if_includes(section_header.characteristics(), 0x00000001, &mut flags, "RESERVED");
+        add_if_includes(section_header.characteristics(), 0x00000002, &mut flags, "RESERVED");
+        add_if_includes(section_header.characteristics(), 0x00000004, &mut flags, "RESERVED");
+        add_if_includes(section_header.characteristics(), 0x00000008, &mut flags, "IMAGE_SCN_TYPE_NO_PAD");
+        add_if_includes(section_header.characteristics(), 0x00000010, &mut flags, "RESERVED");
+        add_if_includes(section_header.characteristics(), 0x00000020, &mut flags, "IMAGE_SCN_CNT_CODE");
+        add_if_includes(section_header.characteristics(), 0x00000040, &mut flags, "IMAGE_SCN_CNT_INITIALIZED_DATA");
+        add_if_includes(section_header.characteristics(), 0x00000080, &mut flags, "IMAGE_SCN_CNT_UNINITIALIZED_DATA");
+        add_if_includes(section_header.characteristics(), 0x00000100, &mut flags, "IMAGE_SCN_LNK_OTHER");
+        add_if_includes(section_header.characteristics(), 0x00000200, &mut flags, "IMAGE_SCN_LNK_INFO");
+        add_if_includes(section_header.characteristics(), 0x00000400, &mut flags, "RESERVED");
+        add_if_includes(section_header.characteristics(), 0x00000800, &mut flags, "IMAGE_SCN_LNK_REMOVE");
+        add_if_includes(section_header.characteristics(), 0x00001000, &mut flags, "IMAGE_SCN_LNK_COMDAT");
+        add_if_includes(section_header.characteristics(), 0x00002000, &mut flags, "RESERVED");
+        add_if_includes(section_header.characteristics(), 0x00004000, &mut flags, "IMAGE_SCN_NO_DEFER_SPEC_EXC");
+        add_if_includes(section_header.characteristics(), 0x00008000, &mut flags, "IMAGE_SCN_GPREL");
+        add_if_includes(section_header.characteristics(), 0x00010000, &mut flags, "RESERVED");
+        add_if_includes(section_header.characteristics(), 0x00020000, &mut flags, "IMAGE_SCN_MEM_PURGEABLE");
+        add_if_includes(section_header.characteristics(), 0x00040000, &mut flags, "IMAGE_SCN_MEM_LOCKED");
+        add_if_includes(section_header.characteristics(), 0x00080000, &mut flags, "IMAGE_SCN_MEM_PRELOAD");
+        add_if_includes(section_header.characteristics(), 0x00100000, &mut flags, "IMAGE_SCN_ALIGN_1BYTES");
+        add_if_includes(section_header.characteristics(), 0x00200000, &mut flags, "IMAGE_SCN_ALIGN_2BYTES");
+        add_if_includes(section_header.characteristics(), 0x00300000, &mut flags, "IMAGE_SCN_ALIGN_4BYTES");
+        add_if_includes(section_header.characteristics(), 0x00400000, &mut flags, "IMAGE_SCN_ALIGN_8BYTES");
+        add_if_includes(section_header.characteristics(), 0x00500000, &mut flags, "IMAGE_SCN_ALIGN_16BYTES");
+        add_if_includes(section_header.characteristics(), 0x00600000, &mut flags, "IMAGE_SCN_ALIGN_32BYTES");
+        add_if_includes(section_header.characteristics(), 0x00700000, &mut flags, "IMAGE_SCN_ALIGN_64BYTES");
+        add_if_includes(section_header.characteristics(), 0x00800000, &mut flags, "IMAGE_SCN_ALIGN_128BYTES");
+        add_if_includes(section_header.characteristics(), 0x00900000, &mut flags, "IMAGE_SCN_ALIGN_256BYTES");
+        add_if_includes(section_header.characteristics(), 0x00A00000, &mut flags, "IMAGE_SCN_ALIGN_512BYTES");
+        add_if_includes(section_header.characteristics(), 0x00B00000, &mut flags, "IMAGE_SCN_ALIGN_1024BYTES");
+        add_if_includes(section_header.characteristics(), 0x00C00000, &mut flags, "IMAGE_SCN_ALIGN_2048BYTES");
+        add_if_includes(section_header.characteristics(), 0x00D00000, &mut flags, "IMAGE_SCN_ALIGN_4096BYTES");
+        add_if_includes(section_header.characteristics(), 0x00E00000, &mut flags, "IMAGE_SCN_ALIGN_8192BYTES");
+        add_if_includes(section_header.characteristics(), 0x01000000, &mut flags, "IMAGE_SCN_LNK_NRELOC_OVFL");
+        add_if_includes(section_header.characteristics(), 0x02000000, &mut flags, "IMAGE_SCN_MEM_DISCARDABLE");
+        add_if_includes(section_header.characteristics(), 0x04000000, &mut flags, "IMAGE_SCN_MEM_NOT_CACHED");
+        add_if_includes(section_header.characteristics(), 0x08000000, &mut flags, "IMAGE_SCN_MEM_NOT_PAGED");
+        add_if_includes(section_header.characteristics(), 0x10000000, &mut flags, "IMAGE_SCN_MEM_SHARED");
+        add_if_includes(section_header.characteristics(), 0x20000000, &mut flags, "IMAGE_SCN_MEM_EXECUTE");
+        add_if_includes(section_header.characteristics(), 0x40000000, &mut flags, "IMAGE_SCN_MEM_READ");
+        add_if_includes(section_header.characteristics(), 0x80000000, &mut flags, "IMAGE_SCN_MEM_WRITE");
 
         println!(
             "
