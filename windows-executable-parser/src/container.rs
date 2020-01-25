@@ -11,8 +11,11 @@ pub struct DosContainer {
     is_windows_executable: bool,
 }
 
-#[allow(dead_code)]
 impl DosContainer {
+    pub fn addr_of_nt_header(&self) -> i32 {
+        self.addr_of_nt_header
+    }
+
     pub fn is_windows_executable(&self) -> bool {
         self.is_windows_executable
     }
@@ -24,7 +27,6 @@ pub struct DirectoryEntries {
     virtual_address: u32,
 }
 
-#[allow(dead_code)]
 impl DirectoryEntries {
     pub fn size(&self) -> u32 {
         self.size
@@ -85,7 +87,6 @@ pub struct NtContainer {
     win32_version_value: u32,
 }
 
-#[allow(dead_code)]
 impl NtContainer {
     pub fn address_of_entry_point(&self) -> u32 {
         self.address_of_entry_point
@@ -245,12 +246,75 @@ impl NtContainer {
 }
 
 #[derive(Debug)]
+pub struct SectionHeader {
+    characteristics: u32,
+    name: [char; 8], // return as string
+    number_of_linenumbers: u16,
+    number_of_relocations: u16,
+    pointer_to_linenumbers: u32,
+    pointer_to_raw_data: u32,
+    pointer_to_relocations: u32,
+    size_of_raw_data: u32,
+    virtual_address: u32,
+    virtual_size: u32,
+}
+
+impl SectionHeader {
+    pub fn characteristics(&self) -> u32 {
+        self.characteristics
+    }
+
+    pub fn name(&self) -> String {
+        self.name.iter().cloned().collect::<String>()
+    }
+
+    pub fn number_of_linenumbers(&self) -> u16 {
+        self.number_of_linenumbers
+    }
+
+    pub fn number_of_relocations(&self) -> u16 {
+        self.number_of_relocations
+    }
+
+    pub fn pointer_to_linenumbers(&self) -> u32 {
+        self.pointer_to_linenumbers
+    }
+
+    pub fn pointer_to_raw_data(&self) -> u32 {
+        self.pointer_to_raw_data
+    }
+
+    pub fn pointer_to_relocations(&self) -> u32 {
+        self.pointer_to_relocations
+    }
+
+    pub fn size_of_raw_data(&self) -> u32 {
+        self.size_of_raw_data
+    }
+
+    pub fn virtual_address(&self) -> u32 {
+        self.virtual_address
+    }
+
+    pub fn virtual_size(&self) -> u32 {
+        self.virtual_size
+    }
+}
+
+#[derive(Debug)]
+pub struct SectionData {}
+
+impl SectionData {}
+
+#[derive(Debug)]
 pub struct Container {
     path: String,
     reader: BufReader<File>,
 
     dos_container: Option<DosContainer>,
     nt_container: Option<NtContainer>,
+    section_headers: Option<Vec<SectionHeader>>,
+    section_data: Option<Vec<SectionData>>,
 }
 
 impl Container {
@@ -271,22 +335,32 @@ impl Container {
             // containers
             dos_container: None,
             nt_container: None,
+            section_headers: None,
+            section_data: None,
         })
     }
 
     // getters
-    pub fn dos_container(&mut self) -> Option<&DosContainer> {
+    pub fn dos_container(&self) -> Option<&DosContainer> {
         self.dos_container.as_ref()
     }
 
-    pub fn nt_container(&mut self) -> Option<&NtContainer> {
+    pub fn nt_container(&self) -> Option<&NtContainer> {
         self.nt_container.as_ref()
+    }
+
+    pub fn section_headers(&self) -> Option<Vec<&SectionHeader>> {
+        match &self.section_headers {
+            Some(section_headers) => Some(section_headers.iter().map(|s| s).collect()),
+            None => None,
+        }
     }
 
     // functions
     pub fn parse(&mut self) -> Result<(), failure::Error> {
         self.dos_container = Some(self.parse_dos_header()?);
         self.nt_container = Some(self.parse_nt_header()?);
+        self.section_headers = Some(self.parse_section_header()?);
 
         Ok(())
     }
@@ -310,7 +384,7 @@ impl Container {
     }
 
     fn parse_nt_header(&mut self) -> Result<NtContainer, failure::Error> {
-        self.seek_to(SeekFrom::Start(self.dos_container.as_ref().unwrap().addr_of_nt_header as u64))?;
+        self.seek_to(SeekFrom::Start(self.dos_container.as_ref().unwrap().addr_of_nt_header() as u64))?;
 
         // sig
         let bytes = self.read_bytes(4)?;
@@ -450,6 +524,38 @@ impl Container {
             time_date_stamps,
             win32_version_value,
         })
+    }
+
+    fn parse_section_header(&mut self) -> Result<Vec<SectionHeader>, failure::Error> {
+        let mut vector: Vec<SectionHeader> = Vec::new();
+
+        for _ in 0..self.nt_container().unwrap().number_of_sections {
+            let name = self.read_bytes(8)?.into_iter().map(|s| s as char).collect::<Vec<char>>();
+            let virtual_size = self.read_as_u32()?;
+            let virtual_address = self.read_as_u32()?;
+            let size_of_raw_data = self.read_as_u32()?;
+            let pointer_to_raw_data = self.read_as_u32()?;
+            let pointer_to_relocations = self.read_as_u32()?;
+            let pointer_to_linenumbers = self.read_as_u32()?;
+            let number_of_relocations = self.read_as_u16()?;
+            let number_of_linenumbers = self.read_as_u16()?;
+            let characteristics = self.read_as_u32()?;
+
+            vector.push(SectionHeader {
+                name: name[0..8].try_into().unwrap(),
+                virtual_size,
+                virtual_address,
+                size_of_raw_data,
+                pointer_to_raw_data,
+                pointer_to_relocations,
+                pointer_to_linenumbers,
+                number_of_relocations,
+                number_of_linenumbers,
+                characteristics,
+            });
+        }
+
+        Ok(vector)
     }
 
     fn read_bytes(&mut self, size: u8) -> Result<Vec<u8>, failure::Error> {

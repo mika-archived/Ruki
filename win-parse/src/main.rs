@@ -49,13 +49,14 @@ fn parse(path: &str) -> Result<(), failure::Error> {
         println!("PE signature found");
     }
 
-    print_file_headers(&mut container);
-    print_optional_headers(&mut container);
+    print_file_headers(&container);
+    print_optional_headers(&container);
+    print_section_headers(&container);
 
     Ok(())
 }
 
-fn print_file_headers(container: &mut Container) -> () {
+fn print_file_headers(container: &Container) -> () {
     let nt_container = container.nt_container().unwrap();
 
     let machine = match nt_container.machine() {
@@ -87,7 +88,7 @@ FILE HEADER VALUES
     );
 }
 
-fn print_optional_headers(container: &mut Container) -> () {
+fn print_optional_headers(container: &Container) -> () {
     let nt_container = container.nt_container().unwrap();
 
     let magic = match nt_container.arch() {
@@ -223,4 +224,40 @@ OPTIONAL HEADER VALUES
         nt_container.data_dictionary()[15].virtual_address(),
         nt_container.data_dictionary()[15].size(),
     )
+}
+
+fn print_section_headers(container: &Container) -> () {
+    let nt_container = container.nt_container().unwrap();
+    let section_headers = container.section_headers().unwrap();
+
+    for i in 0..nt_container.number_of_sections() {
+        let section_header = &section_headers[i as usize];
+
+        println!(
+            "\
+SECTION HEADER #{}
+    name                             : {}
+    virtual size                     : {:X}
+    virtual address                  : {:X}
+    size of raw data                 : {:X}
+    file pointer to raw data         : {:X}
+    file pointer to relocation table : {:X}
+    file pointer to line numbers     : {:X}
+    number of relocations            : {:X}
+    number of line numbers           : {:X}
+    flags                            : {:X}
+        ",
+            i + 1,
+            section_header.name(),
+            section_header.virtual_size(),
+            section_header.virtual_address(),
+            section_header.size_of_raw_data(),
+            section_header.pointer_to_raw_data(),
+            section_header.pointer_to_relocations(),
+            section_header.pointer_to_linenumbers(),
+            section_header.number_of_relocations(),
+            section_header.number_of_linenumbers(),
+            section_header.characteristics(),
+        );
+    }
 }
