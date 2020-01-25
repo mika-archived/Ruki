@@ -3,7 +3,7 @@ use std::fs::File;
 use std::io::{BufReader, Read, Seek, SeekFrom};
 use std::path::Path;
 
-const X64_MACHINE: u16 = 0x7664;
+const X64_MACHINE: u16 = 0x8664;
 
 #[derive(Debug)]
 pub struct DosContainer {
