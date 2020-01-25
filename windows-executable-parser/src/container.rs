@@ -42,7 +42,7 @@ pub struct NtContainer {
 
     // File Header
     characteristics: u16,
-    machine_raw: u16,
+    machine: u16,
     number_of_sections: u16,
     number_of_symbols: u32,
     pointer_to_symbol_table: u32,
@@ -51,7 +51,7 @@ pub struct NtContainer {
 
     // Optional Header
     address_of_entry_point: u32,
-    arch_raw: u16, // aka magic
+    arch: u16, // aka magic
     base_of_code: u32,
     base_of_data: u32,
     checksum: u32,
@@ -85,28 +85,24 @@ pub struct NtContainer {
 
 #[allow(dead_code)]
 impl NtContainer {
-    pub fn address_of_entry_point(&self) -> String {
-        format!("0x{:X}", self.address_of_entry_point)
+    pub fn address_of_entry_point(&self) -> u32 {
+        self.address_of_entry_point
     }
 
-    pub fn arch(&self) -> Result<&'static str, ()> {
-        match self.arch_raw {
-            0x010b => Ok("PE32"),
-            0x020b => Ok("PE32+"),
-            _ => Err(()),
-        }
+    pub fn arch(&self) -> u16 {
+        self.arch
     }
 
-    pub fn base_of_code(&self) -> String {
-        format!("0x{:X}", self.base_of_code)
+    pub fn base_of_code(&self) -> u32 {
+        self.base_of_code
     }
 
-    pub fn base_of_data(&self) -> String {
-        format!("0x{:X}", self.base_of_data)
+    pub fn base_of_data(&self) -> u32 {
+        self.base_of_data
     }
 
-    pub fn characteristics(&self) -> String {
-        format!("0x{:X}", self.characteristics)
+    pub fn characteristics(&self) -> u16 {
+        self.characteristics
     }
 
     pub fn checksum(&self) -> u32 {
@@ -117,41 +113,60 @@ impl NtContainer {
         &self.data_dictionary
     }
 
-    pub fn dll_characteristics(&self) -> String {
-        format!("0x{:X}", self.dll_characteristics)
+    pub fn dll_characteristics(&self) -> u16 {
+        self.dll_characteristics
     }
 
-    pub fn file_alignment(&self) -> String {
-        format!("0x{:X}", self.file_alignment)
+    pub fn file_alignment(&self) -> u32 {
+        self.file_alignment
     }
 
-    pub fn image_base(&self) -> String {
-        format!("0x{:X}", self.image_base)
-    }
-
-    pub fn image_version(&self) -> String {
-        format!("{}.{}", self.major_image_version, self.minor_image_version)
+    pub fn image_base(&self) -> u32 {
+        self.image_base
     }
 
     pub fn is_portable_executable(&self) -> bool {
         self.is_portable_executable
     }
 
-    pub fn linker_version(&self) -> String {
-        format!("{}.{}", self.major_linker_version, self.minor_linker_version)
-    }
-
     pub fn loader_flags(&self) -> u32 {
         self.loader_flags
     }
 
-    pub fn machine(&self) -> Result<&'static str, ()> {
-        match self.machine_raw {
-            0x014C => Ok("x86"),
-            0x0200 => Ok("Intel Itanium"),
-            0x8664 => Ok("x64"),
-            _ => Err(()),
-        }
+    pub fn machine(&self) -> u16 {
+        self.machine
+    }
+
+    pub fn major_linker_version(&self) -> u8 {
+        self.major_linker_version
+    }
+
+    pub fn major_image_version(&self) -> u16 {
+        self.major_image_version
+    }
+
+    pub fn major_operating_system_version(&self) -> u16 {
+        self.major_operating_system_version
+    }
+
+    pub fn major_subsystem_version(&self) -> u16 {
+        self.major_subsystem_version
+    }
+
+    pub fn minor_linker_version(&self) -> u8 {
+        self.minor_linker_version
+    }
+
+    pub fn minor_image_version(&self) -> u16 {
+        self.minor_image_version
+    }
+
+    pub fn minor_operating_system_version(&self) -> u16 {
+        self.minor_operating_system_version
+    }
+
+    pub fn minor_subsystem_version(&self) -> u16 {
+        self.minor_subsystem_version
     }
 
     pub fn number_of_rva_and_sizes(&self) -> u32 {
@@ -166,16 +181,12 @@ impl NtContainer {
         self.number_of_symbols // always 0
     }
 
-    pub fn operating_system_version(&self) -> String {
-        format!("{}.{}", self.major_operating_system_version, self.minor_operating_system_version)
-    }
-
     pub fn pointer_to_symbol_table(&self) -> u32 {
         self.pointer_to_symbol_table // always 0
     }
 
-    pub fn section_alignment(&self) -> String {
-        format!("0x{:X}", self.section_alignment)
+    pub fn section_alignment(&self) -> u32 {
+        self.section_alignment
     }
 
     pub fn size_of_code(&self) -> u32 {
@@ -218,27 +229,16 @@ impl NtContainer {
         self.size_of_uninitialized_data
     }
 
-    pub fn subsystem(&self) -> Result<&'static str, ()> {
-        match self.subsystem {
-            0 => Ok("Unknown"),
-            1 => Ok("No subsystem required"),
-            2 => Ok("Windows GUI"),
-            3 => Ok("Windows CUI"),
-            5 => Ok("OS/2 CUI"),
-            7 => Ok("POSIX CUI"),
-            9 => Ok("Windows CE"),
-            10 => Ok("EFI application"),
-            11 => Ok("EFI driver with boot services"),
-            12 => Ok("EFI driver with runtime services"),
-            13 => Ok("EFI ROM"),
-            14 => Ok("XBox"),
-            16 => Ok("Boot application"),
-            _ => Err(()),
-        }
+    pub fn subsystem(&self) -> u16 {
+        self.subsystem
     }
 
-    pub fn time_date_stamps(&self) -> String {
-        format!("0x{:X}", self.time_date_stamps)
+    pub fn time_date_stamps(&self) -> u32 {
+        self.time_date_stamps
+    }
+
+    pub fn win32_version_value(&self) -> u32 {
+        self.win32_version_value
     }
 }
 
@@ -319,7 +319,7 @@ impl Container {
         }
 
         // file header
-        let machine_raw = self.read_as_u16()?;
+        let machine = self.read_as_u16()?;
         let number_of_sections = self.read_as_u16()?;
         let time_date_stamps = self.read_as_u32()?;
         let pointer_to_symbol_table = self.read_as_u32()?;
@@ -328,7 +328,7 @@ impl Container {
         let characteristics = self.read_as_u16()?;
 
         // optional header
-        let arch_raw = self.read_as_u16()?;
+        let arch = self.read_as_u16()?;
         let major_linker_version = self.read_as_u8()?;
         let minor_linker_version = self.read_as_u8()?;
         let size_of_code = self.read_as_u32()?;
@@ -386,7 +386,7 @@ impl Container {
 
         Ok(NtContainer {
             address_of_entry_point,
-            arch_raw,
+            arch,
             base_of_code,
             base_of_data,
             characteristics,
@@ -414,7 +414,7 @@ impl Container {
             image_base,
             is_portable_executable,
             loader_flags,
-            machine_raw,
+            machine,
             major_image_version,
             major_linker_version,
             major_operating_system_version,
@@ -485,11 +485,16 @@ impl Container {
         return Ok(i32::from_le_bytes(bytes[0..4].try_into().unwrap()));
     }
 
+    // UNSIGNED LONG LONG, u64
+    fn read_as_u64(&mut self) -> Result<u64, failure::Error> {
+        let bytes = self.read_bytes(8)?;
+        return Ok(u64::from_le_bytes(bytes[0..8].try_into().unwrap()));
+    }
+
     fn seek_to(&mut self, seek: SeekFrom) -> Result<(), failure::Error> {
         match self.reader.seek(seek) {
             Ok(_) => return Ok(()),
             Err(_) => {
-                #[rustfmt::skip]
                 let msg = format!("Error occurred while seeking to specified address");
                 return Err(failure::err_msg(msg));
             }
