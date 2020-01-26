@@ -2,7 +2,7 @@ use std::env;
 use std::path::Path;
 
 use exitfailure::ExitFailure;
-use windows_executable_parser::Container;
+use weep::Container;
 
 fn main() -> Result<(), ExitFailure> {
     let args: Vec<String> = env::args().collect();
@@ -19,10 +19,10 @@ fn main() -> Result<(), ExitFailure> {
 fn usage() {
     print!(
         "\
-WinParse - Parsing Windows Portable Executable File and dump it
+WinAnalysis - Parsing Windows Portable Executable File and dump it
 
 USAGE:
-    win-parse [Windows Executable]"
+    win-analysis [Windows Executable]"
     );
 }
 
@@ -41,25 +41,25 @@ fn parse(path: &str) -> Result<(), failure::Error> {
 
     println!("Dump of file {}\n", path.file_name().unwrap().to_str().unwrap());
 
-    if container.dos_container().unwrap().is_windows_executable() {
+    if container.dos_header().unwrap().is_windows_executable() {
         println!("DOS signature found");
     }
 
-    if container.nt_container().unwrap().is_portable_executable() {
+    if container.file_header().unwrap().is_portable_executable() {
         println!("PE signature found");
     }
 
     print_file_headers(&container);
-    print_optional_headers(&container);
-    print_section_headers(&container);
+    // print_optional_headers(&container);
+    // print_section_headers(&container);
 
     Ok(())
 }
 
 fn print_file_headers(container: &Container) -> () {
-    let nt_container = container.nt_container().unwrap();
+    let file_header = container.file_header().unwrap();
 
-    let machine = match nt_container.machine() {
+    let machine = match file_header.machine() {
         0x014C => "x86",
         0x0200 => "Intel IPF",
         0x8664 => "x64",
@@ -73,21 +73,21 @@ fn print_file_headers(container: &Container) -> () {
     }
 
     let mut characteristics: Vec<String> = Vec::new();
-    add_if_includes(nt_container.characteristics(), 0x0001, &mut characteristics, "IMAGE_FILE_RELOCS_STRIPPED");
-    add_if_includes(nt_container.characteristics(), 0x0002, &mut characteristics, "IMAGE_FILE_EXECUTABLE_IMAGE");
-    add_if_includes(nt_container.characteristics(), 0x0004, &mut characteristics, "IMAGE_FILE_LINE_NUMS_STRIPPED");
-    add_if_includes(nt_container.characteristics(), 0x0008, &mut characteristics, "IMAGE_FILE_LOCAL_SYMS_STRIPPED");
-    add_if_includes(nt_container.characteristics(), 0x0010, &mut characteristics, "IMAGE_FILE_AGGRESIVE_WS_TRIM");
-    add_if_includes(nt_container.characteristics(), 0x0020, &mut characteristics, "IMAGE_FILE_LARGE_ADDRESS_AWARE");
-    add_if_includes(nt_container.characteristics(), 0x0080, &mut characteristics, "IMAGE_FILE_BYTES_REVERSED_LO");
-    add_if_includes(nt_container.characteristics(), 0x0100, &mut characteristics, "IMAGE_FILE_32BIT_MACHINE");
-    add_if_includes(nt_container.characteristics(), 0x0200, &mut characteristics, "IMAGE_FILE_DEBUG_STRIPPED");
-    add_if_includes(nt_container.characteristics(), 0x0400, &mut characteristics, "IMAGE_FILE_REMOVABLE_RUN_FROM_SWAP");
-    add_if_includes(nt_container.characteristics(), 0x0800, &mut characteristics, "IMAGE_FILE_NET_RUN_FROM_SWAP");
-    add_if_includes(nt_container.characteristics(), 0x1000, &mut characteristics, "IMAGE_FILE_SYSTEM");
-    add_if_includes(nt_container.characteristics(), 0x2000, &mut characteristics, "IMAGE_FILE_DLL");
-    add_if_includes(nt_container.characteristics(), 0x4000, &mut characteristics, "IMAGE_FILE_UP_SYSTEM_ONLY");
-    add_if_includes(nt_container.characteristics(), 0x8000, &mut characteristics, "IMAGE_FILE_BYTES_REVERSED_HI");
+    add_if_includes(file_header.characteristics(), 0x0001, &mut characteristics, "IMAGE_FILE_RELOCS_STRIPPED");
+    add_if_includes(file_header.characteristics(), 0x0002, &mut characteristics, "IMAGE_FILE_EXECUTABLE_IMAGE");
+    add_if_includes(file_header.characteristics(), 0x0004, &mut characteristics, "IMAGE_FILE_LINE_NUMS_STRIPPED");
+    add_if_includes(file_header.characteristics(), 0x0008, &mut characteristics, "IMAGE_FILE_LOCAL_SYMS_STRIPPED");
+    add_if_includes(file_header.characteristics(), 0x0010, &mut characteristics, "IMAGE_FILE_AGGRESIVE_WS_TRIM");
+    add_if_includes(file_header.characteristics(), 0x0020, &mut characteristics, "IMAGE_FILE_LARGE_ADDRESS_AWARE");
+    add_if_includes(file_header.characteristics(), 0x0080, &mut characteristics, "IMAGE_FILE_BYTES_REVERSED_LO");
+    add_if_includes(file_header.characteristics(), 0x0100, &mut characteristics, "IMAGE_FILE_32BIT_MACHINE");
+    add_if_includes(file_header.characteristics(), 0x0200, &mut characteristics, "IMAGE_FILE_DEBUG_STRIPPED");
+    add_if_includes(file_header.characteristics(), 0x0400, &mut characteristics, "IMAGE_FILE_REMOVABLE_RUN_FROM_SWAP");
+    add_if_includes(file_header.characteristics(), 0x0800, &mut characteristics, "IMAGE_FILE_NET_RUN_FROM_SWAP");
+    add_if_includes(file_header.characteristics(), 0x1000, &mut characteristics, "IMAGE_FILE_SYSTEM");
+    add_if_includes(file_header.characteristics(), 0x2000, &mut characteristics, "IMAGE_FILE_DLL");
+    add_if_includes(file_header.characteristics(), 0x4000, &mut characteristics, "IMAGE_FILE_UP_SYSTEM_ONLY");
+    add_if_includes(file_header.characteristics(), 0x8000, &mut characteristics, "IMAGE_FILE_BYTES_REVERSED_HI");
 
     println!(
         "
@@ -100,14 +100,14 @@ FILE HEADER VALUES
     size of optional header      : {:X}
     characteristics              : {:X}\
     ",
-        nt_container.machine(),
+        file_header.machine(),
         machine,
-        nt_container.number_of_sections(),
-        nt_container.time_date_stamps(),
-        nt_container.pointer_to_symbol_table(),
-        nt_container.number_of_symbols(),
-        nt_container.size_of_optional_header(),
-        nt_container.characteristics(),
+        file_header.number_of_sections(),
+        file_header.time_date_stamps(),
+        file_header.pointer_to_symbol_table(),
+        file_header.number_of_symbols(),
+        file_header.size_of_optional_header(),
+        file_header.characteristics(),
     );
 
     for characteristic in characteristics {
@@ -116,15 +116,15 @@ FILE HEADER VALUES
 }
 
 fn print_optional_headers(container: &Container) -> () {
-    let nt_container = container.nt_container().unwrap();
+    let optional_header = container.optional_header().unwrap();
 
-    let magic = match nt_container.arch() {
+    let magic = match optional_header.magic() {
         0x10b => "PE32  (x86)",
         0x20b => "PE32+ (x64)",
         0x107 => "ROM",
         _ => "Unknown",
     };
-    let subsystem = match nt_container.subsystem() {
+    let subsystem = match optional_header.subsystem() {
         1 => "No subsystem required",
         2 => "Windows GUI",
         3 => "Windows CUI",
@@ -146,22 +146,22 @@ fn print_optional_headers(container: &Container) -> () {
         }
     }
     let mut characteristics: Vec<String> = Vec::new();
-    add_if_includes(nt_container.dll_characteristics(), 0x0001, &mut characteristics, "IMAGE_DLLCHARACTERISTICS_PROCESS_INIT");
-    add_if_includes(nt_container.dll_characteristics(), 0x0002, &mut characteristics, "IMAGE_DLLCHARACTERISTICS_PROCESS_TERM");
-    add_if_includes(nt_container.dll_characteristics(), 0x0004, &mut characteristics, "IMAGE_DLLCHARACTERISTICS_THREAD_INIT");
-    add_if_includes(nt_container.dll_characteristics(), 0x0008, &mut characteristics, "IMAGE_DLLCHARACTERISTICS_THREAD_TERM");
-    add_if_includes(nt_container.dll_characteristics(), 0x0020, &mut characteristics, "IMAGE_DLLCHARACTERISTICS_HIGH_ENTROPY_VA");
-    add_if_includes(nt_container.dll_characteristics(), 0x0040, &mut characteristics, "IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE");
-    add_if_includes(nt_container.dll_characteristics(), 0x0080, &mut characteristics, "IMAGE_DLLCHARACTERISTICS_FORCE_INTEGRITY");
-    add_if_includes(nt_container.dll_characteristics(), 0x0100, &mut characteristics, "IMAGE_DLLCHARACTERISTICS_NX_COMPAT");
-    add_if_includes(nt_container.dll_characteristics(), 0x0200, &mut characteristics, "IMAGE_DLLCHARACTERISTICS_NO_ISOLATION");
-    add_if_includes(nt_container.dll_characteristics(), 0x0400, &mut characteristics, "IMAGE_DLLCHARACTERISTICS_NO_SEH");
-    add_if_includes(nt_container.dll_characteristics(), 0x0800, &mut characteristics, "IMAGE_DLLCHARACTERISTICS_NO_BIND");
-    add_if_includes(nt_container.dll_characteristics(), 0x1000, &mut characteristics, "IMAGE_DLLCHARACTERISTICS_APP_CONTAINER");
-    add_if_includes(nt_container.dll_characteristics(), 0x2000, &mut characteristics, "IMAGE_DLLCHARACTERISTICS_WDM_DRIVER");
-    add_if_includes(nt_container.dll_characteristics(), 0x4000, &mut characteristics, "IMAGE_DLLCHARACTERISTICS_GUARD_CF");
+    add_if_includes(optional_header.dll_characteristics(), 0x0001, &mut characteristics, "IMAGE_DLLCHARACTERISTICS_PROCESS_INIT");
+    add_if_includes(optional_header.dll_characteristics(), 0x0002, &mut characteristics, "IMAGE_DLLCHARACTERISTICS_PROCESS_TERM");
+    add_if_includes(optional_header.dll_characteristics(), 0x0004, &mut characteristics, "IMAGE_DLLCHARACTERISTICS_THREAD_INIT");
+    add_if_includes(optional_header.dll_characteristics(), 0x0008, &mut characteristics, "IMAGE_DLLCHARACTERISTICS_THREAD_TERM");
+    add_if_includes(optional_header.dll_characteristics(), 0x0020, &mut characteristics, "IMAGE_DLLCHARACTERISTICS_HIGH_ENTROPY_VA");
+    add_if_includes(optional_header.dll_characteristics(), 0x0040, &mut characteristics, "IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE");
+    add_if_includes(optional_header.dll_characteristics(), 0x0080, &mut characteristics, "IMAGE_DLLCHARACTERISTICS_FORCE_INTEGRITY");
+    add_if_includes(optional_header.dll_characteristics(), 0x0100, &mut characteristics, "IMAGE_DLLCHARACTERISTICS_NX_COMPAT");
+    add_if_includes(optional_header.dll_characteristics(), 0x0200, &mut characteristics, "IMAGE_DLLCHARACTERISTICS_NO_ISOLATION");
+    add_if_includes(optional_header.dll_characteristics(), 0x0400, &mut characteristics, "IMAGE_DLLCHARACTERISTICS_NO_SEH");
+    add_if_includes(optional_header.dll_characteristics(), 0x0800, &mut characteristics, "IMAGE_DLLCHARACTERISTICS_NO_BIND");
+    add_if_includes(optional_header.dll_characteristics(), 0x1000, &mut characteristics, "IMAGE_DLLCHARACTERISTICS_APP_CONTAINER");
+    add_if_includes(optional_header.dll_characteristics(), 0x2000, &mut characteristics, "IMAGE_DLLCHARACTERISTICS_WDM_DRIVER");
+    add_if_includes(optional_header.dll_characteristics(), 0x4000, &mut characteristics, "IMAGE_DLLCHARACTERISTICS_GUARD_CF");
     #[rustfmt::skip]
-    add_if_includes(nt_container.dll_characteristics(), 0x8000, &mut characteristics, "IMAGE_DLLCHARACTERISTICS_TERMINAL_SERVER_AWARE");
+    add_if_includes(optional_header.dll_characteristics(), 0x8000, &mut characteristics, "IMAGE_DLLCHARACTERISTICS_TERMINAL_SERVER_AWARE");
 
     println!(
         "
@@ -187,32 +187,32 @@ OPTIONAL HEADER VALUES
     subsystem                      : {:X} ({})
     DLL characteristics            : {:X}\
     ",
-        nt_container.arch(),
+        optional_header.magic(),
         magic,
-        nt_container.major_linker_version(),
-        nt_container.minor_linker_version(),
-        nt_container.size_of_code(),
-        nt_container.size_of_initialized_data(),
-        nt_container.size_of_uninitialized_data(),
-        nt_container.address_of_entry_point(),
-        nt_container.base_of_code(),
-        nt_container.base_of_data(),
-        nt_container.image_base(),
-        nt_container.section_alignment(),
-        nt_container.file_alignment(),
-        nt_container.major_operating_system_version(),
-        nt_container.minor_operating_system_version(),
-        nt_container.major_image_version(),
-        nt_container.minor_image_version(),
-        nt_container.major_subsystem_version(),
-        nt_container.minor_subsystem_version(),
-        nt_container.win32_version_value(),
-        nt_container.size_of_image(),
-        nt_container.size_of_headers(),
-        nt_container.checksum(),
-        nt_container.subsystem(),
+        optional_header.major_linker_version(),
+        optional_header.minor_linker_version(),
+        optional_header.size_of_code(),
+        optional_header.size_of_initialized_data(),
+        optional_header.size_of_uninitialized_data(),
+        optional_header.address_of_entry_point(),
+        optional_header.base_of_code(),
+        optional_header.base_of_data(),
+        optional_header.image_base(),
+        optional_header.section_alignment(),
+        optional_header.file_alignment(),
+        optional_header.major_operating_system_version(),
+        optional_header.minor_operating_system_version(),
+        optional_header.major_image_version(),
+        optional_header.minor_image_version(),
+        optional_header.major_subsystem_version(),
+        optional_header.minor_subsystem_version(),
+        optional_header.win32_version_value(),
+        optional_header.size_of_image(),
+        optional_header.size_of_headers(),
+        optional_header.checksum(),
+        optional_header.subsystem(),
         subsystem,
-        nt_container.dll_characteristics(),
+        optional_header.dll_characteristics(),
     );
 
     for characteristic in characteristics {
@@ -243,47 +243,48 @@ OPTIONAL HEADER VALUES
     COM descriptor directory       : {:X} [{:X}]
     reserved directory             : {:X} [{:X}]\
     ",
-        nt_container.size_of_stack_reserve(),
-        nt_container.size_of_stack_commit(),
-        nt_container.size_of_heap_reserve(),
-        nt_container.size_of_heap_commit(),
-        nt_container.loader_flags(),
-        nt_container.number_of_rva_and_sizes(),
-        nt_container.data_directories()[0].virtual_address(),
-        nt_container.data_directories()[0].size(),
-        nt_container.data_directories()[1].virtual_address(),
-        nt_container.data_directories()[1].size(),
-        nt_container.data_directories()[2].virtual_address(),
-        nt_container.data_directories()[2].size(),
-        nt_container.data_directories()[3].virtual_address(),
-        nt_container.data_directories()[3].size(),
-        nt_container.data_directories()[4].virtual_address(),
-        nt_container.data_directories()[4].size(),
-        nt_container.data_directories()[5].virtual_address(),
-        nt_container.data_directories()[5].size(),
-        nt_container.data_directories()[6].virtual_address(),
-        nt_container.data_directories()[6].size(),
-        nt_container.data_directories()[7].virtual_address(),
-        nt_container.data_directories()[7].size(),
-        nt_container.data_directories()[8].virtual_address(),
-        nt_container.data_directories()[8].size(),
-        nt_container.data_directories()[9].virtual_address(),
-        nt_container.data_directories()[9].size(),
-        nt_container.data_directories()[10].virtual_address(),
-        nt_container.data_directories()[10].size(),
-        nt_container.data_directories()[11].virtual_address(),
-        nt_container.data_directories()[11].size(),
-        nt_container.data_directories()[12].virtual_address(),
-        nt_container.data_directories()[12].size(),
-        nt_container.data_directories()[13].virtual_address(),
-        nt_container.data_directories()[13].size(),
-        nt_container.data_directories()[14].virtual_address(),
-        nt_container.data_directories()[14].size(),
-        nt_container.data_directories()[15].virtual_address(),
-        nt_container.data_directories()[15].size(),
+        optional_header.size_of_stack_reserve(),
+        optional_header.size_of_stack_commit(),
+        optional_header.size_of_heap_reserve(),
+        optional_header.size_of_heap_commit(),
+        optional_header.loader_flags(),
+        optional_header.number_of_rva_and_sizes(),
+        optional_header.data_directories()[0].virtual_address(),
+        optional_header.data_directories()[0].size(),
+        optional_header.data_directories()[1].virtual_address(),
+        optional_header.data_directories()[1].size(),
+        optional_header.data_directories()[2].virtual_address(),
+        optional_header.data_directories()[2].size(),
+        optional_header.data_directories()[3].virtual_address(),
+        optional_header.data_directories()[3].size(),
+        optional_header.data_directories()[4].virtual_address(),
+        optional_header.data_directories()[4].size(),
+        optional_header.data_directories()[5].virtual_address(),
+        optional_header.data_directories()[5].size(),
+        optional_header.data_directories()[6].virtual_address(),
+        optional_header.data_directories()[6].size(),
+        optional_header.data_directories()[7].virtual_address(),
+        optional_header.data_directories()[7].size(),
+        optional_header.data_directories()[8].virtual_address(),
+        optional_header.data_directories()[8].size(),
+        optional_header.data_directories()[9].virtual_address(),
+        optional_header.data_directories()[9].size(),
+        optional_header.data_directories()[10].virtual_address(),
+        optional_header.data_directories()[10].size(),
+        optional_header.data_directories()[11].virtual_address(),
+        optional_header.data_directories()[11].size(),
+        optional_header.data_directories()[12].virtual_address(),
+        optional_header.data_directories()[12].size(),
+        optional_header.data_directories()[13].virtual_address(),
+        optional_header.data_directories()[13].size(),
+        optional_header.data_directories()[14].virtual_address(),
+        optional_header.data_directories()[14].size(),
+        optional_header.data_directories()[15].virtual_address(),
+        optional_header.data_directories()[15].size(),
     )
 }
 
+/*
 fn print_section_headers(container: &Container) -> () {
     let nt_container = container.nt_container().unwrap();
     let section_headers = container.section_headers().unwrap();
@@ -373,3 +374,4 @@ SECTION HEADER #{}
         }
     }
 }
+*/

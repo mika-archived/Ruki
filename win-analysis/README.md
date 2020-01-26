@@ -1,4 +1,4 @@
-# win-parse
+# win-analysis
 
 Parse Windows Portable Executable (PE) File and dump it.
 
@@ -6,5 +6,5 @@ Parse Windows Portable Executable (PE) File and dump it.
 ## Usage
 
 ```bash
-> win-parse /path/to/executable.dll
+> win-analysis /path/to/executable.dll
 ```
