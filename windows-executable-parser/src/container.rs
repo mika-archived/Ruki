@@ -22,12 +22,12 @@ impl DosContainer {
 }
 
 #[derive(Debug)]
-pub struct DirectoryEntries {
+pub struct DirectoryEntry {
     size: u32,
     virtual_address: u32,
 }
 
-impl DirectoryEntries {
+impl DirectoryEntry {
     pub fn size(&self) -> u32 {
         self.size
     }
@@ -59,7 +59,7 @@ pub struct NtContainer {
     base_of_code: u32,
     base_of_data: u32,
     checksum: u32,
-    data_directory: [DirectoryEntries; 16],
+    data_directory: [DirectoryEntry; 16],
     dll_characteristics: u16,
     file_alignment: u32,
     image_base: u64,
@@ -112,8 +112,8 @@ impl NtContainer {
         self.checksum
     }
 
-    pub fn data_directories(&self) -> &[DirectoryEntries; 16] {
-        &self.data_directory
+    pub fn data_directories(&self) -> [&DirectoryEntry; 16] {
+        self.data_directory.iter().map(|s| s).collect::<Vec<&DirectoryEntry>>()[0..16].try_into().unwrap()
     }
 
     pub fn dll_characteristics(&self) -> u16 {
@@ -302,9 +302,50 @@ impl SectionHeader {
 }
 
 #[derive(Debug)]
-pub struct SectionData {}
+pub struct DebugDirectory {
+    address_of_raw_data: u32,
+    characteristics: u32,
+    major_version: u16,
+    minor_version: u16,
+    pointer_to_raw_data: u32,
+    size_of_data: u32,
+    time_date_stamps: u32,
+    r#type: u32,
+}
 
-impl SectionData {}
+impl DebugDirectory {
+    pub fn address_of_raw_data(&self) -> u32 {
+        self.address_of_raw_data
+    }
+
+    pub fn characteristics(&self) -> u32 {
+        self.characteristics
+    }
+
+    pub fn major_version(&self) -> u16 {
+        self.major_version
+    }
+
+    pub fn minor_version(&self) -> u16 {
+        self.minor_version
+    }
+
+    pub fn pointer_to_raw_data(&self) -> u32 {
+        self.pointer_to_raw_data
+    }
+
+    pub fn size_of_data(&self) -> u32 {
+        self.size_of_data
+    }
+
+    pub fn time_date_stamps(&self) -> u32 {
+        self.time_date_stamps
+    }
+
+    pub fn r#type(&self) -> u32 {
+        self.r#type
+    }
+}
 
 #[derive(Debug)]
 pub struct Container {
@@ -314,7 +355,23 @@ pub struct Container {
     dos_container: Option<DosContainer>,
     nt_container: Option<NtContainer>,
     section_headers: Option<Vec<SectionHeader>>,
-    section_data: Option<Vec<SectionData>>,
+
+    export_data: Option<()>,
+    import_data: Option<()>,
+    resource_data: Option<()>,
+    exception_data: Option<()>,
+    security_data: Option<()>,
+    base_relocation_data: Option<()>,
+    debug_data: Option<Vec<DebugDirectory>>,
+    architecture_data: Option<()>,
+    global_pointer_data: Option<()>,
+    tls_data: Option<()>,
+    load_config_data: Option<()>,
+    bound_import_data: Option<()>,
+    entry_iat_data: Option<()>,
+    delay_import_data: Option<()>,
+    com_descriptor_data: Option<()>,
+    // reserved: Option<()>,
 }
 
 impl Container {
@@ -336,7 +393,23 @@ impl Container {
             dos_container: None,
             nt_container: None,
             section_headers: None,
-            section_data: None,
+
+            // data
+            export_data: None,
+            import_data: None,
+            resource_data: None,
+            exception_data: None,
+            security_data: None,
+            base_relocation_data: None,
+            debug_data: None,
+            architecture_data: None,
+            global_pointer_data: None,
+            tls_data: None,
+            load_config_data: None,
+            bound_import_data: None,
+            entry_iat_data: None,
+            delay_import_data: None,
+            com_descriptor_data: None,
         })
     }
 
@@ -356,11 +429,23 @@ impl Container {
         }
     }
 
+    pub fn debug_data(&self) -> Option<Vec<&DebugDirectory>> {
+        match &self.debug_data {
+            Some(debug_data) => Some(debug_data.iter().map(|s| s).collect()),
+            None => None,
+        }
+    }
+
     // functions
     pub fn parse(&mut self) -> Result<(), failure::Error> {
+        // headers
         self.dos_container = Some(self.parse_dos_header()?);
         self.nt_container = Some(self.parse_nt_header()?);
         self.section_headers = Some(self.parse_section_header()?);
+
+        // directories
+        // TODO other data
+        self.debug_data = Some(self.parse_debug_data()?);
 
         Ok(())
     }
@@ -441,8 +526,8 @@ impl Container {
         let loader_flags = self.read_as_u32()?;
         let number_of_rva_and_sizes = self.read_as_u32()?;
 
-        fn create_directory_entry(container: &mut Container) -> Result<DirectoryEntries, failure::Error> {
-            Ok(DirectoryEntries {
+        fn create_directory_entry(container: &mut Container) -> Result<DirectoryEntry, failure::Error> {
+            Ok(DirectoryEntry {
                 virtual_address: container.read_as_u32()?,
                 size: container.read_as_u32()?,
             })
@@ -463,7 +548,7 @@ impl Container {
         let bound_import = create_directory_entry(self)?;
         let entry_iat = create_directory_entry(self)?;
         let delay_import = create_directory_entry(self)?;
-        let com_descriptor = create_directory_entry(self)?;
+        let com_descriptor = create_directory_entry(self)?; // a.k.a .NET CLR Descriptor
         let reserved = create_directory_entry(self)?;
 
         Ok(NtContainer {
@@ -558,6 +643,70 @@ impl Container {
         Ok(vector)
     }
 
+    fn parse_debug_data(&mut self) -> Result<Vec<DebugDirectory>, failure::Error> {
+        let directory = self.nt_container().unwrap().data_directories()[6];
+        let debug_info_size = directory.size();
+        if debug_info_size == 0 {
+            return Ok(vec![]); // empty directory
+        }
+
+        let section = match self.in_section(directory) {
+            Some(section) => section,
+            None => {
+                let msg = "Error: failed to load directory data";
+                return Err(failure::err_msg(msg));
+            }
+        };
+
+        // RVA to file pointer
+        let address = directory.virtual_address() - section.virtual_address() + section.pointer_to_raw_data();
+        self.seek_to(SeekFrom::Start(address as u64))?;
+
+        let mut vector: Vec<DebugDirectory> = Vec::new();
+        // debug tables are 28 bytes
+        for _ in 0..(debug_info_size / 28) {
+            let characteristics = self.read_as_u32()?;
+            let time_date_stamps = self.read_as_u32()?;
+            let major_version = self.read_as_u16()?;
+            let minor_version = self.read_as_u16()?;
+            let r#type = self.read_as_u32()?;
+            let size_of_data = self.read_as_u32()?;
+            let address_of_raw_data = self.read_as_u32()?;
+            let pointer_to_raw_data = self.read_as_u32()?;
+
+            vector.push(DebugDirectory {
+                address_of_raw_data,
+                characteristics,
+                major_version,
+                minor_version,
+                pointer_to_raw_data,
+                size_of_data,
+                time_date_stamps,
+                r#type,
+            });
+        }
+
+        Ok(vector)
+    }
+
+    fn in_section(&self, directory: &DirectoryEntry) -> Option<&SectionHeader> {
+        let nt_container = self.nt_container().unwrap().number_of_sections();
+        let address = directory.virtual_address();
+
+        for i in 0..nt_container {
+            let section = self.section_headers().unwrap()[i as usize];
+            #[rustfmt::skip]
+            let size = if section.virtual_size() == 0 { section.size_of_raw_data() } else { section.virtual_size() };
+
+            if section.virtual_address() <= address && address < section.virtual_address() + size {
+                return Some(section);
+            }
+        }
+
+        None
+    }
+
+    // reader functions
     fn read_bytes(&mut self, size: u8) -> Result<Vec<u8>, failure::Error> {
         let mut buffer = [0; 1];
         let mut vector: Vec<u8> = Vec::new();
