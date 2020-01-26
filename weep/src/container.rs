@@ -3,72 +3,16 @@ use std::fs::File;
 use std::io::{BufReader, Read, Seek, SeekFrom};
 use std::path::Path;
 
-use scroll::{Pread, LE};
-
 mod data_directory;
 mod dos_header;
 mod file_header;
 mod optional_header;
+mod section_header;
 
 use dos_header::DosHeader;
 use file_header::FileHeader;
 use optional_header::OptionalHeader;
-
-#[derive(Debug)]
-pub struct SectionHeader {
-    characteristics: u32,
-    name: [char; 8], // return as string
-    number_of_linenumbers: u16,
-    number_of_relocations: u16,
-    pointer_to_linenumbers: u32,
-    pointer_to_raw_data: u32,
-    pointer_to_relocations: u32,
-    size_of_raw_data: u32,
-    virtual_address: u32,
-    virtual_size: u32,
-}
-
-impl SectionHeader {
-    pub fn characteristics(&self) -> u32 {
-        self.characteristics
-    }
-
-    pub fn name(&self) -> String {
-        self.name.iter().cloned().collect::<String>()
-    }
-
-    pub fn number_of_linenumbers(&self) -> u16 {
-        self.number_of_linenumbers
-    }
-
-    pub fn number_of_relocations(&self) -> u16 {
-        self.number_of_relocations
-    }
-
-    pub fn pointer_to_linenumbers(&self) -> u32 {
-        self.pointer_to_linenumbers
-    }
-
-    pub fn pointer_to_raw_data(&self) -> u32 {
-        self.pointer_to_raw_data
-    }
-
-    pub fn pointer_to_relocations(&self) -> u32 {
-        self.pointer_to_relocations
-    }
-
-    pub fn size_of_raw_data(&self) -> u32 {
-        self.size_of_raw_data
-    }
-
-    pub fn virtual_address(&self) -> u32 {
-        self.virtual_address
-    }
-
-    pub fn virtual_size(&self) -> u32 {
-        self.virtual_size
-    }
-}
+use section_header::SectionHeader;
 
 #[derive(Debug)]
 pub struct DebugDirectory {
@@ -239,7 +183,12 @@ impl Container {
 
         self.optional_header = Some(OptionalHeader::parse(self, &mut offset)?);
 
-        // self.section_headers = Some(self.parse_section_header()?);
+        let mut section_headers: Vec<SectionHeader> = Vec::new();
+        for _ in 0..self.file_header().unwrap().number_of_sections() {
+            section_headers.push(SectionHeader::parse(self, &mut offset)?);
+        }
+
+        self.section_headers = Some(section_headers);
 
         // directories
         // TODO other data
@@ -346,56 +295,4 @@ impl Container {
         None
     }
     */
-
-    // reader functions
-    pub(in crate::container) fn read_bytes(&mut self, size: u8) -> Result<Vec<u8>, failure::Error> {
-        let mut buffer = [0; 1];
-        let mut vector: Vec<u8> = Vec::new();
-
-        for _ in 0..size {
-            match &self.reader.read(&mut buffer).unwrap_or(0) {
-                0 => {
-                    let msg = format!("Failed to read {} bytes from stream", size);
-                    return Err(failure::err_msg(msg));
-                }
-                _ => vector.push(buffer[0]),
-            };
-        }
-
-        Ok(vector)
-    }
-
-    // UNSIGNED CHAR, BYTE, u8
-    pub(in crate::container) fn read_as_u8(&mut self) -> Result<u8, failure::Error> {
-        let bytes = self.read_bytes(1)?;
-        return Ok(u8::from_le_bytes(bytes[0..1].try_into().unwrap()));
-    }
-
-    // UNSIGNED SHORT, WORD, u16
-    pub(in crate::container) fn read_as_u16(&mut self) -> Result<u16, failure::Error> {
-        let bytes = self.read_bytes(2)?;
-        return Ok(u16::from_le_bytes(bytes[0..2].try_into().unwrap()));
-    }
-
-    // UNSIGNED INT, DOUBLE WORD, u32
-    pub(in crate::container) fn read_as_u32(&mut self) -> Result<u32, failure::Error> {
-        let bytes = self.read_bytes(4)?;
-        return Ok(u32::from_le_bytes(bytes[0..4].try_into().unwrap()));
-    }
-
-    // UNSIGNED LONG LONG, u64
-    pub(in crate::container) fn read_as_u64(&mut self) -> Result<u64, failure::Error> {
-        let bytes = self.read_bytes(8)?;
-        return Ok(u64::from_le_bytes(bytes[0..8].try_into().unwrap()));
-    }
-
-    pub(in crate::container) fn seek_to(&mut self, seek: SeekFrom) -> Result<(), failure::Error> {
-        match self.reader.seek(seek) {
-            Ok(_) => return Ok(()),
-            Err(_) => {
-                let msg = format!("Error occurred while seeking to specified address");
-                return Err(failure::err_msg(msg));
-            }
-        }
-    }
 }

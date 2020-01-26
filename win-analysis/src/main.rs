@@ -51,7 +51,7 @@ fn parse(path: &str) -> Result<(), failure::Error> {
 
     print_file_headers(&container);
     print_optional_headers(&container);
-    // print_section_headers(&container);
+    print_section_headers(&container);
 
     Ok(())
 }
@@ -284,12 +284,11 @@ OPTIONAL HEADER VALUES
     )
 }
 
-/*
 fn print_section_headers(container: &Container) -> () {
-    let nt_container = container.nt_container().unwrap();
+    let file_header = container.file_header().unwrap();
     let section_headers = container.section_headers().unwrap();
 
-    for i in 0..nt_container.number_of_sections() {
+    for i in 0..file_header.number_of_sections() {
         let section_header = &section_headers[i as usize];
 
         fn add_if_includes(flags: u32, flag: u32, vector: &mut Vec<String>, text: &str) -> () {
@@ -374,4 +373,3 @@ SECTION HEADER #{}
         }
     }
 }
-*/
