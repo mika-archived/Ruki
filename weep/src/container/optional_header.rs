@@ -3,158 +3,250 @@ use std::convert::TryInto;
 use super::data_directory::DataDirectory;
 use super::Container;
 
+use scroll::{Pread, LE};
+
 const NUMBER_OF_DATA_DIRECTORIES: usize = 16;
 const X64_MACHINE: u16 = 0x8664;
 
-#[derive(Debug)]
-pub struct OptionalHeader {
-    // see: https://docs.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-image_file_header
+#[repr(C)]
+#[derive(Clone, Copy, Debug, Default, Pread)]
+pub struct OptionalHeader32 {
+    // see: https://docs.microsoft.com/ja-jp/windows/win32/api/winnt/ns-winnt-image_optional_header32
+    magic: u16,
+    major_linker_version: u8,
+    minor_linker_version: u8,
+    size_of_code: u32,
+    size_of_initialized_data: u32,
+    size_of_uninitialized_data: u32,
     address_of_entry_point: u32,
     base_of_code: u32,
     base_of_data: u32,
-    checksum: u32,
-    data_directory: [DataDirectory; NUMBER_OF_DATA_DIRECTORIES],
-    dll_characteristics: u16,
-    file_alignment: u32,
-    image_base: u64,
-    loader_flags: u32,
-    magic: u16,
-    major_image_version: u16,
-    major_linker_version: u8,
-    major_operating_system_version: u16,
-    major_subsystem_version: u16,
-    minor_image_version: u16,
-    minor_linker_version: u8,
-    minor_operating_system_version: u16,
-    minor_subsystem_version: u16,
-    number_of_rva_and_sizes: u32,
+    image_base: u32,
     section_alignment: u32,
-    size_of_code: u32,
-    size_of_headers: u32,
-    size_of_heap_commit: u64,
-    size_of_heap_reserve: u64,
-    size_of_image: u32,
-    size_of_initialized_data: u32,
-    size_of_stack_commit: u64,
-    size_of_stack_reserve: u64,
-    size_of_uninitialized_data: u32,
-    subsystem: u16,
+    file_alignment: u32,
+    major_operating_system_version: u16,
+    minor_operating_system_version: u16,
+    major_image_version: u16,
+    minor_image_version: u16,
+    major_subsystem_version: u16,
+    minor_subsystem_version: u16,
     win32_version_value: u32,
+    size_of_image: u32,
+    size_of_headers: u32,
+    checksum: u32,
+    subsystem: u16,
+    dll_characteristics: u16,
+    size_of_stack_reserve: u32,
+    size_of_stack_commit: u32,
+    size_of_heap_reserve: u32,
+    size_of_heap_commit: u32,
+    loader_flags: u32,
+    number_of_rva_and_sizes: u32,
+}
+
+#[repr(C)]
+#[derive(Clone, Copy, Debug, Default, Pread)]
+pub struct OptionalHeader64 {
+    // see: https://docs.microsoft.com/ja-jp/windows/win32/api/winnt/ns-winnt-image_optional_header64
+    magic: u16,
+    major_linker_version: u8,
+    minor_linker_version: u8,
+    size_of_code: u32,
+    size_of_initialized_data: u32,
+    size_of_uninitialized_data: u32,
+    address_of_entry_point: u32,
+    base_of_code: u32,
+    image_base: u64,
+    section_alignment: u32,
+    file_alignment: u32,
+    major_operating_system_version: u16,
+    minor_operating_system_version: u16,
+    major_image_version: u16,
+    minor_image_version: u16,
+    major_subsystem_version: u16,
+    minor_subsystem_version: u16,
+    win32_version_value: u32,
+    size_of_image: u32,
+    size_of_headers: u32,
+    checksum: u32,
+    subsystem: u16,
+    dll_characteristics: u16,
+    size_of_stack_reserve: u64,
+    size_of_stack_commit: u64,
+    size_of_heap_reserve: u64,
+    size_of_heap_commit: u64,
+    loader_flags: u32,
+    number_of_rva_and_sizes: u32,
+}
+
+#[derive(Debug)]
+pub struct OptionalHeader {
+    // this field is private, worked as accessor as x86/x64 properties
+    magic: u16,
+    major_linker_version: u8,
+    minor_linker_version: u8,
+    size_of_code: u32,
+    size_of_initialized_data: u32,
+    size_of_uninitialized_data: u32,
+    address_of_entry_point: u32,
+    base_of_code: u32,
+    base_of_data: u32,
+    image_base: u64,
+    section_alignment: u32,
+    file_alignment: u32,
+    major_operating_system_version: u16,
+    minor_operating_system_version: u16,
+    major_image_version: u16,
+    minor_image_version: u16,
+    major_subsystem_version: u16,
+    minor_subsystem_version: u16,
+    win32_version_value: u32,
+    size_of_image: u32,
+    size_of_headers: u32,
+    checksum: u32,
+    subsystem: u16,
+    dll_characteristics: u16,
+    size_of_stack_reserve: u64,
+    size_of_stack_commit: u64,
+    size_of_heap_reserve: u64,
+    size_of_heap_commit: u64,
+    loader_flags: u32,
+    number_of_rva_and_sizes: u32,
+    data_directory: [DataDirectory; NUMBER_OF_DATA_DIRECTORIES],
 }
 
 impl OptionalHeader {
-    pub fn parse(container: &mut Container) -> Result<OptionalHeader, failure::Error> {
+    pub fn parse(container: &mut Container, mut offset: &mut usize) -> Result<OptionalHeader, failure::Error> {
         let machine = container.file_header().unwrap().machine();
 
-        let magic = container.read_as_u16()?;
-        let major_linker_version = container.read_as_u8()?;
-        let minor_linker_version = container.read_as_u8()?;
-        let size_of_code = container.read_as_u32()?;
-        let size_of_initialized_data = container.read_as_u32()?;
-        let size_of_uninitialized_data = container.read_as_u32()?;
-        let address_of_entry_point = container.read_as_u32()?;
-        let base_of_code = container.read_as_u32()?;
-        let base_of_data = match machine {
-            X64_MACHINE => 0, // if machine is x64, this data is stripped
-            _ => container.read_as_u32()?,
-        };
-        let image_base = match machine {
-            X64_MACHINE => container.read_as_u64()?, // x64
-            _ => container.read_as_u32()? as u64,
-        };
-        let section_alignment = container.read_as_u32()?;
-        let file_alignment = container.read_as_u32()?;
-        let major_operating_system_version = container.read_as_u16()?;
-        let minor_operating_system_version = container.read_as_u16()?;
-        let major_image_version = container.read_as_u16()?;
-        let minor_image_version = container.read_as_u16()?;
-        let major_subsystem_version = container.read_as_u16()?;
-        let minor_subsystem_version = container.read_as_u16()?;
-        let win32_version_value = container.read_as_u32()?;
-        let size_of_image = container.read_as_u32()?;
-        let size_of_headers = container.read_as_u32()?;
-        let checksum = container.read_as_u32()?;
-        let subsystem = container.read_as_u16()?;
-        let dll_characteristics = container.read_as_u16()?;
-        let size_of_stack_reserve = if machine == X64_MACHINE { container.read_as_u64()? } else { container.read_as_u32()? as u64 };
-        let size_of_stack_commit = if machine == X64_MACHINE { container.read_as_u64()? } else { container.read_as_u32()? as u64 };
-        let size_of_heap_reserve = if machine == X64_MACHINE { container.read_as_u64()? } else { container.read_as_u32()? as u64 };
-        let size_of_heap_commit = if machine == X64_MACHINE { container.read_as_u64()? } else { container.read_as_u32()? as u64 };
-        let loader_flags = container.read_as_u32()?;
-        let number_of_rva_and_sizes = container.read_as_u32()?;
+        if machine == X64_MACHINE {
+            let optional_header = container.buffer().gread_with::<OptionalHeader64>(&mut offset, LE).map_err(|_| {
+                let msg = format!("Failed to read the OPTIONAL_HEADER_64 at {:#X}", offset);
+                return failure::err_msg(msg);
+            })?;
 
-        fn create_directory_data(container: &mut Container) -> Result<DataDirectory, failure::Error> {
-            Ok(DataDirectory::new(container.read_as_u32()?, container.read_as_u32()?))
+            let data_directory = OptionalHeader::parse_data_directories(container, &mut offset)?;
+
+            return Ok(OptionalHeader {
+                magic: optional_header.magic,
+                major_linker_version: optional_header.major_linker_version,
+                minor_linker_version: optional_header.minor_linker_version,
+                size_of_code: optional_header.size_of_code,
+                size_of_initialized_data: optional_header.size_of_initialized_data,
+                size_of_uninitialized_data: optional_header.size_of_uninitialized_data,
+                address_of_entry_point: optional_header.address_of_entry_point,
+                base_of_code: optional_header.base_of_code,
+                base_of_data: 0,
+                image_base: optional_header.image_base,
+                section_alignment: optional_header.section_alignment,
+                file_alignment: optional_header.file_alignment,
+                major_operating_system_version: optional_header.major_operating_system_version,
+                minor_operating_system_version: optional_header.minor_operating_system_version,
+                major_image_version: optional_header.major_image_version,
+                minor_image_version: optional_header.minor_image_version,
+                major_subsystem_version: optional_header.major_subsystem_version,
+                minor_subsystem_version: optional_header.minor_subsystem_version,
+                win32_version_value: optional_header.win32_version_value,
+                size_of_image: optional_header.size_of_image,
+                size_of_headers: optional_header.size_of_headers,
+                checksum: optional_header.checksum,
+                subsystem: optional_header.subsystem,
+                dll_characteristics: optional_header.dll_characteristics,
+                size_of_stack_reserve: optional_header.size_of_stack_reserve,
+                size_of_stack_commit: optional_header.size_of_stack_commit,
+                size_of_heap_reserve: optional_header.size_of_heap_reserve,
+                size_of_heap_commit: optional_header.size_of_heap_commit,
+                loader_flags: optional_header.loader_flags,
+                number_of_rva_and_sizes: optional_header.number_of_rva_and_sizes,
+                data_directory,
+            });
+        } else {
+            let optional_header = container.buffer().gread_with::<OptionalHeader32>(&mut offset, LE).map_err(|_| {
+                let msg = format!("Failed to read the OPTIONAL_HEADER_64 at {:#X}", offset);
+                return failure::err_msg(msg);
+            })?;
+
+            let data_directory = OptionalHeader::parse_data_directories(container, &mut offset)?;
+
+            return Ok(OptionalHeader {
+                magic: optional_header.magic,
+                major_linker_version: optional_header.major_linker_version,
+                minor_linker_version: optional_header.minor_linker_version,
+                size_of_code: optional_header.size_of_code,
+                size_of_initialized_data: optional_header.size_of_initialized_data,
+                size_of_uninitialized_data: optional_header.size_of_uninitialized_data,
+                address_of_entry_point: optional_header.address_of_entry_point,
+                base_of_code: optional_header.base_of_code,
+                base_of_data: optional_header.base_of_data,
+                image_base: optional_header.image_base as u64,
+                section_alignment: optional_header.section_alignment,
+                file_alignment: optional_header.file_alignment,
+                major_operating_system_version: optional_header.major_operating_system_version,
+                minor_operating_system_version: optional_header.minor_operating_system_version,
+                major_image_version: optional_header.major_image_version,
+                minor_image_version: optional_header.minor_image_version,
+                major_subsystem_version: optional_header.major_subsystem_version,
+                minor_subsystem_version: optional_header.minor_subsystem_version,
+                win32_version_value: optional_header.win32_version_value,
+                size_of_image: optional_header.size_of_image,
+                size_of_headers: optional_header.size_of_headers,
+                checksum: optional_header.checksum,
+                subsystem: optional_header.subsystem,
+                dll_characteristics: optional_header.dll_characteristics,
+                size_of_stack_reserve: optional_header.size_of_stack_reserve as u64,
+                size_of_stack_commit: optional_header.size_of_stack_commit as u64,
+                size_of_heap_reserve: optional_header.size_of_heap_reserve as u64,
+                size_of_heap_commit: optional_header.size_of_heap_commit as u64,
+                loader_flags: optional_header.loader_flags,
+                number_of_rva_and_sizes: optional_header.number_of_rva_and_sizes,
+                data_directory,
+            });
+        }
+    }
+
+    fn parse_data_directories(container: &mut Container, mut offset: &mut usize) -> Result<[DataDirectory; NUMBER_OF_DATA_DIRECTORIES], failure::Error> {
+        fn read_dictionary_data(container: &Container, mut offset: &mut usize) -> Result<DataDirectory, failure::Error> {
+            container.buffer().gread_with::<DataDirectory>(&mut offset, LE).map_err(|_| {
+                let msg = format!("Failed to read the DATA_DIRECTORY at {:#X}", offset);
+                return failure::err_msg(msg);
+            })
         }
 
-        // directory entries
-        let export = create_directory_data(container)?;
-        let import = create_directory_data(container)?;
-        let resource = create_directory_data(container)?;
-        let exception = create_directory_data(container)?;
-        let security = create_directory_data(container)?;
-        let basereloc = create_directory_data(container)?;
-        let debug = create_directory_data(container)?;
-        let architecture = create_directory_data(container)?;
-        let global_ptr = create_directory_data(container)?;
-        let tls = create_directory_data(container)?;
-        let load_config = create_directory_data(container)?;
-        let bound_import = create_directory_data(container)?;
-        let entry_iat = create_directory_data(container)?;
-        let delay_import = create_directory_data(container)?;
-        let com_descriptor = create_directory_data(container)?; // a.k.a .NET CLR Descriptor
-        let reserved = create_directory_data(container)?;
+        let export = read_dictionary_data(container, &mut offset)?;
+        let import = read_dictionary_data(container, &mut offset)?;
+        let resource = read_dictionary_data(container, &mut offset)?;
+        let exception = read_dictionary_data(container, &mut offset)?;
+        let security = read_dictionary_data(container, &mut offset)?;
+        let basereloc = read_dictionary_data(container, &mut offset)?;
+        let debug = read_dictionary_data(container, &mut offset)?;
+        let architecture = read_dictionary_data(container, &mut offset)?;
+        let global_ptr = read_dictionary_data(container, &mut offset)?;
+        let tls = read_dictionary_data(container, &mut offset)?;
+        let load_config = read_dictionary_data(container, &mut offset)?;
+        let bound_import = read_dictionary_data(container, &mut offset)?;
+        let entry_iat = read_dictionary_data(container, &mut offset)?;
+        let delay_import = read_dictionary_data(container, &mut offset)?;
+        let com_descriptor = read_dictionary_data(container, &mut offset)?; // a.k.a .NET CLR Descriptor
+        let reserved = read_dictionary_data(container, &mut offset)?;
 
-        Ok(OptionalHeader {
-            address_of_entry_point,
-            base_of_code,
-            base_of_data,
-            data_directory: [
-                export,
-                import,
-                resource,
-                exception,
-                security,
-                basereloc,
-                debug,
-                architecture,
-                global_ptr,
-                tls,
-                load_config,
-                bound_import,
-                entry_iat,
-                delay_import,
-                com_descriptor,
-                reserved,
-            ],
-            dll_characteristics,
-            checksum,
-            file_alignment,
-            image_base,
-            loader_flags,
-            magic,
-            major_image_version,
-            major_linker_version,
-            major_operating_system_version,
-            major_subsystem_version,
-            minor_image_version,
-            minor_linker_version,
-            minor_operating_system_version,
-            minor_subsystem_version,
-            number_of_rva_and_sizes,
-            section_alignment,
-            size_of_code,
-            size_of_headers,
-            size_of_heap_commit,
-            size_of_heap_reserve,
-            size_of_image,
-            size_of_initialized_data,
-            size_of_stack_commit,
-            size_of_stack_reserve,
-            size_of_uninitialized_data,
-            subsystem,
-            win32_version_value,
-        })
+        return Ok([
+            export,
+            import,
+            resource,
+            exception,
+            security,
+            basereloc,
+            debug,
+            architecture,
+            global_ptr,
+            tls,
+            load_config,
+            bound_import,
+            entry_iat,
+            delay_import,
+            com_descriptor,
+            reserved,
+        ]);
     }
 
     // getters

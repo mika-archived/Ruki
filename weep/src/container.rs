@@ -165,7 +165,7 @@ impl Container {
             buffer,
             reader,
 
-            // containers
+            // headers
             dos_header: None,
             file_header: None,
             optional_header: None,
@@ -237,7 +237,7 @@ impl Container {
             return Ok(());
         }
 
-        self.optional_header = Some(OptionalHeader::parse(self)?);
+        self.optional_header = Some(OptionalHeader::parse(self, &mut offset)?);
 
         // self.section_headers = Some(self.parse_section_header()?);
 

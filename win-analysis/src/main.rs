@@ -50,7 +50,7 @@ fn parse(path: &str) -> Result<(), failure::Error> {
     }
 
     print_file_headers(&container);
-    // print_optional_headers(&container);
+    print_optional_headers(&container);
     // print_section_headers(&container);
 
     Ok(())
