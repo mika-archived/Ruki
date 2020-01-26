@@ -24,15 +24,7 @@ impl FileHeader {
         })?;
 
         if signature != 0x00004550 {
-            return Ok(FileHeader {
-                characteristics: 0,
-                machine: 0,
-                number_of_sections: 0,
-                number_of_symbols: 0,
-                pointer_to_symbol_table: 0,
-                size_of_optional_header: 0,
-                time_date_stamps: 0,
-            });
+            return Ok(FileHeader { ..Default::default() });
         }
 
         let file_header = container.buffer().gread_with::<FileHeader>(&mut offset, LE).map_err(|_| {
