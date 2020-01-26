@@ -1,5 +1,5 @@
 [package]
-name = "windows-executable-parser"
+name = "weep"
 version = "0.1.0"
 authors = ["Mikazuki <mikazuki_fuyuno@outlook.com>"]
 edition = "2018"
@@ -8,3 +8,4 @@ edition = "2018"
 
 [dependencies]
 failure = "0.1"
+scroll = { version = "0.10", features = ["derive"] }

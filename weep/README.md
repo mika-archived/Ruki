@@ -1,4 +1,4 @@
-# windows-executable-parser
+# weep
 
 This crate provides parser function for Windows Portable Executable (PE) File.
 
@@ -8,7 +8,7 @@ Add this to your `Cargo.toml`
 
 ```toml
 [dependencies]
-windows-executable-parser = "0.1"
+weep = "0.1"
 ```
 
 ## Example
@@ -21,6 +21,7 @@ fn main() -> Result<(), failure::Error> {
   let container = Container::create(&path)?;
   container.parse()?;
 
+  // You can access all of properties
   println!("{}", container.dos_container().unwrap().is_windows_executable()); // => true
 }
 ```
