@@ -4,61 +4,18 @@ use std::io::{BufReader, Read, Seek, SeekFrom};
 use std::path::Path;
 
 mod data_directory;
+mod debug_directory;
 mod dos_header;
 mod file_header;
 mod optional_header;
 mod section_header;
 
+use data_directory::DataDirectory;
+use debug_directory::DebugInformation;
 use dos_header::DosHeader;
 use file_header::FileHeader;
 use optional_header::OptionalHeader;
 use section_header::SectionHeader;
-
-#[derive(Debug)]
-pub struct DebugDirectory {
-    address_of_raw_data: u32,
-    characteristics: u32,
-    major_version: u16,
-    minor_version: u16,
-    pointer_to_raw_data: u32,
-    size_of_data: u32,
-    time_date_stamps: u32,
-    r#type: u32,
-}
-
-impl DebugDirectory {
-    pub fn address_of_raw_data(&self) -> u32 {
-        self.address_of_raw_data
-    }
-
-    pub fn characteristics(&self) -> u32 {
-        self.characteristics
-    }
-
-    pub fn major_version(&self) -> u16 {
-        self.major_version
-    }
-
-    pub fn minor_version(&self) -> u16 {
-        self.minor_version
-    }
-
-    pub fn pointer_to_raw_data(&self) -> u32 {
-        self.pointer_to_raw_data
-    }
-
-    pub fn size_of_data(&self) -> u32 {
-        self.size_of_data
-    }
-
-    pub fn time_date_stamps(&self) -> u32 {
-        self.time_date_stamps
-    }
-
-    pub fn r#type(&self) -> u32 {
-        self.r#type
-    }
-}
 
 #[derive(Debug)]
 pub struct Container {
@@ -77,7 +34,7 @@ pub struct Container {
     exception_data: Option<()>,
     security_data: Option<()>,
     base_relocation_data: Option<()>,
-    debug_data: Option<Vec<DebugDirectory>>,
+    debug_information: Option<Vec<DebugInformation>>,
     architecture_data: Option<()>,
     global_pointer_data: Option<()>,
     tls_data: Option<()>,
@@ -122,7 +79,7 @@ impl Container {
             exception_data: None,
             security_data: None,
             base_relocation_data: None,
-            debug_data: None,
+            debug_information: None,
             architecture_data: None,
             global_pointer_data: None,
             tls_data: None,
@@ -159,9 +116,9 @@ impl Container {
         }
     }
 
-    pub fn debug_data(&self) -> Option<Vec<&DebugDirectory>> {
-        match &self.debug_data {
-            Some(debug_data) => Some(debug_data.iter().map(|s| s).collect()),
+    pub fn debug_information(&self) -> Option<Vec<&DebugInformation>> {
+        match &self.debug_information {
+            Some(debug_information) => Some(debug_information.iter().map(|s| s).collect()),
             None => None,
         }
     }
@@ -192,97 +149,17 @@ impl Container {
 
         // directories
         // TODO other data
+        self.debug_information = Some(DebugInformation::parse(self)?);
         // self.debug_data = Some(self.parse_debug_data()?);
 
         Ok(())
     }
 
-    /*
-    fn parse_section_header(&mut self) -> Result<Vec<SectionHeader>, failure::Error> {
-        let mut vector: Vec<SectionHeader> = Vec::new();
-
-        for _ in 0..self.nt_container().unwrap().number_of_sections {
-            let name = self.read_bytes(8)?.into_iter().map(|s| s as char).collect::<Vec<char>>();
-            let virtual_size = self.read_as_u32()?;
-            let virtual_address = self.read_as_u32()?;
-            let size_of_raw_data = self.read_as_u32()?;
-            let pointer_to_raw_data = self.read_as_u32()?;
-            let pointer_to_relocations = self.read_as_u32()?;
-            let pointer_to_linenumbers = self.read_as_u32()?;
-            let number_of_relocations = self.read_as_u16()?;
-            let number_of_linenumbers = self.read_as_u16()?;
-            let characteristics = self.read_as_u32()?;
-
-            vector.push(SectionHeader {
-                name: name[0..8].try_into().unwrap(),
-                virtual_size,
-                virtual_address,
-                size_of_raw_data,
-                pointer_to_raw_data,
-                pointer_to_relocations,
-                pointer_to_linenumbers,
-                number_of_relocations,
-                number_of_linenumbers,
-                characteristics,
-            });
-        }
-
-        Ok(vector)
-    }
-
-    fn parse_debug_data(&mut self) -> Result<Vec<DebugDirectory>, failure::Error> {
-        let directory = self.nt_container().unwrap().data_directories()[6];
-        let debug_info_size = directory.size();
-        if debug_info_size == 0 {
-            return Ok(vec![]); // empty directory
-        }
-
-        let section = match self.in_section(directory) {
-            Some(section) => section,
-            None => {
-                let msg = "Error: failed to load directory data";
-                return Err(failure::err_msg(msg));
-            }
-        };
-
-        // RVA to file pointer
-        let address = directory.virtual_address() - section.virtual_address() + section.pointer_to_raw_data();
-        self.seek_to(SeekFrom::Start(address as u64))?;
-
-        let mut vector: Vec<DebugDirectory> = Vec::new();
-        // debug tables are 28 bytes
-        for _ in 0..(debug_info_size / 28) {
-            let characteristics = self.read_as_u32()?;
-            let time_date_stamps = self.read_as_u32()?;
-            let major_version = self.read_as_u16()?;
-            let minor_version = self.read_as_u16()?;
-            let r#type = self.read_as_u32()?;
-            let size_of_data = self.read_as_u32()?;
-            let address_of_raw_data = self.read_as_u32()?;
-            let pointer_to_raw_data = self.read_as_u32()?;
-
-            vector.push(DebugDirectory {
-                address_of_raw_data,
-                characteristics,
-                major_version,
-                minor_version,
-                pointer_to_raw_data,
-                size_of_data,
-                time_date_stamps,
-                r#type,
-            });
-        }
-
-        Ok(vector)
-    }
-    */
-
-    /*
-    pub(in crate::container) fn in_section(&self, directory: &DirectoryEntry) -> Option<&SectionHeader> {
-        let nt_container = self.nt_container().unwrap().number_of_sections();
+    pub(in crate::container) fn in_section(&self, directory: &DataDirectory) -> Option<&SectionHeader> {
+        let number_of_sections = self.file_header().unwrap().number_of_sections();
         let address = directory.virtual_address();
 
-        for i in 0..nt_container {
+        for i in 0..number_of_sections {
             let section = self.section_headers().unwrap()[i as usize];
             #[rustfmt::skip]
             let size = if section.virtual_size() == 0 { section.size_of_raw_data() } else { section.virtual_size() };
@@ -294,5 +171,8 @@ impl Container {
 
         None
     }
-    */
+
+    pub(in crate::container) fn rva_to_file_pointer(&self, rva: u32, section: &SectionHeader) -> usize {
+        (rva - section.virtual_address() + section.pointer_to_raw_data()).try_into().unwrap()
+    }
 }

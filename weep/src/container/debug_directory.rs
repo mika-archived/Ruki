@@ -1,5 +1,3 @@
-use std::convert::TryInto;
-
 use scroll::{ctx, Endian, Pread, LE};
 
 use super::Container;
@@ -8,62 +6,6 @@ use crate::guid::GUID;
 const DEBUG_INDEX: usize = 6;
 const BYTES_OF_DEBUG_DIRECTORY: u32 = 28;
 const IMAGE_DEBUG_TYPE_CODEVIEW: u32 = 0x2;
-
-#[derive(Debug, Default)]
-pub struct DebugInformation {
-    directory: DebugDirectory,
-    code_view: Option<CodeView>,
-    // are we support FPO struct?
-}
-
-impl DebugInformation {
-    pub fn parse(container: &Container) -> Result<Vec<Self>, failure::Error> {
-        let data_directory = container.optional_header().unwrap().data_directories()[DEBUG_INDEX];
-        let debug_dir_size = data_directory.size();
-
-        if debug_dir_size == 0 {
-            return Ok(vec![]);
-        }
-
-        let section = match container.in_section(data_directory) {
-            Some(section) => section,
-            None => {
-                let msg = "Failed to read debug directory data";
-                return Err(failure::err_msg(msg));
-            }
-        };
-
-        let mut offset = container.rva_to_file_pointer(data_directory, section);
-        let mut vector: Vec<DebugInformation> = Vec::new();
-
-        for _ in 0..(debug_dir_size / BYTES_OF_DEBUG_DIRECTORY) {
-            let directory = DebugDirectory::parse(container, &mut offset)?;
-
-            match directory.r#type() {
-                IMAGE_DEBUG_TYPE_CODEVIEW => {
-                    let address: usize = directory.pointer_to_raw_data().try_into().unwrap();
-                    let code_view = container.buffer().pread_with::<CodeView>(address, LE).map_err(|_| {
-                        let msg = format!("Failed to read XXX_CODE_VIEW struct at {:X}", offset);
-                        return failure::err_msg(msg);
-                    })?;
-
-                    vector.push(DebugInformation { directory, code_view: Some(code_view) });
-                }
-                _ => vector.push(DebugInformation { directory, code_view: None }),
-            }
-        }
-
-        Ok(vector)
-    }
-
-    pub fn code_view(&self) -> Option<&CodeView> {
-        self.code_view.as_ref()
-    }
-
-    pub fn directory(&self) -> DebugDirectory {
-        self.directory
-    }
-}
 
 #[repr(C)]
 #[derive(Debug, Default)]
@@ -169,5 +111,61 @@ impl DebugDirectory {
 
     pub fn r#type(&self) -> u32 {
         self.r#type
+    }
+}
+
+#[derive(Debug, Default)]
+pub struct DebugInformation {
+    directory: DebugDirectory,
+    code_view: Option<CodeView>,
+    // are we support FPO struct?
+}
+
+impl DebugInformation {
+    pub fn parse(container: &Container) -> Result<Vec<Self>, failure::Error> {
+        let data_directory = container.optional_header().unwrap().data_directories()[DEBUG_INDEX];
+        let debug_dir_size = data_directory.size();
+
+        if debug_dir_size == 0 {
+            return Ok(vec![]);
+        }
+
+        let section = match container.in_section(data_directory) {
+            Some(section) => section,
+            None => {
+                let msg = "Failed to read debug directory data";
+                return Err(failure::err_msg(msg));
+            }
+        };
+
+        let mut offset = container.rva_to_file_pointer(data_directory.virtual_address(), section);
+        let mut vector: Vec<DebugInformation> = Vec::new();
+
+        for _ in 0..(debug_dir_size / BYTES_OF_DEBUG_DIRECTORY) {
+            let directory = DebugDirectory::parse(container, &mut offset)?;
+
+            match directory.r#type() {
+                IMAGE_DEBUG_TYPE_CODEVIEW => {
+                    let address: usize = container.rva_to_file_pointer(directory.address_of_raw_data(), section);
+                    let code_view = container.buffer().pread_with::<CodeView>(address, LE).map_err(|_| {
+                        let msg = format!("Failed to read XXX_CODE_VIEW struct at {:X}", offset);
+                        return failure::err_msg(msg);
+                    })?;
+
+                    vector.push(DebugInformation { directory, code_view: Some(code_view) });
+                }
+                _ => vector.push(DebugInformation { directory, code_view: None }),
+            }
+        }
+
+        Ok(vector)
+    }
+
+    pub fn code_view(&self) -> Option<&CodeView> {
+        self.code_view.as_ref()
+    }
+
+    pub fn directory(&self) -> DebugDirectory {
+        self.directory
     }
 }

@@ -443,7 +443,8 @@ DEBUG INFORMATION #{}
             directory.pointer_to_raw_data(),
         );
 
-        if (directory.r#type() == 0x02/* CodeView has more data */) {
+        // CodeView has more data
+        if directory.r#type() == 0x02 {
             let code_view = debug_container.code_view().unwrap();
             let format = match code_view.format() {
                 // seel: https://github.com/llvm/llvm-project/blob/77e6bb3cbad26f0a95be5c427fa7f87833d5843e/llvm/include/llvm/Object/CVDebugRecord.h#L18-L21
@@ -455,8 +456,7 @@ DEBUG INFORMATION #{}
                 "    code view format    : {}
     GUID                : {}
     age                 : {}
-    PDB path            : {}
-                \
+    PDB path            : {}\
     ",
                 format,
                 code_view.guid(),
