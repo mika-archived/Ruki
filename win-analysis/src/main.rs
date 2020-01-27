@@ -241,22 +241,22 @@ OPTIONAL HEADER VALUES
     size of heap commit            : {:X}
     loader flags                   : {:X}
     number of dictionaries         : {:X} 
-    export directory               : {:X} [{:X}]
-    import directory               : {:X} [{:X}]
-    resource directory             : {:X} [{:X}]
-    exception directory            : {:X} [{:X}]
-    certificates directory         : {:X} [{:X}]
-    base relocation directory      : {:X} [{:X}]
-    debug directory                : {:X} [{:X}]
-    architecture directory         : {:X} [{:X}]
-    global pointer directory       : {:X} [{:X}]
-    thread storage directory       : {:X} [{:X}]
-    load configuration directory   : {:X} [{:X}]
-    bound import directory         : {:X} [{:X}]
-    import address table directory : {:X} [{:X}]
-    delay import directory         : {:X} [{:X}]
-    COM descriptor directory       : {:X} [{:X}]
-    reserved directory             : {:X} [{:X}]\
+    export directory               : {:8X} [{:X}]
+    import directory               : {:8X} [{:X}]
+    resource directory             : {:8X} [{:X}]
+    exception directory            : {:8X} [{:X}]
+    certificates directory         : {:8X} [{:X}]
+    base relocation directory      : {:8X} [{:X}]
+    debug directory                : {:8X} [{:X}]
+    architecture directory         : {:8X} [{:X}]
+    global pointer directory       : {:8X} [{:X}]
+    thread storage directory       : {:8X} [{:X}]
+    load configuration directory   : {:8X} [{:X}]
+    bound import directory         : {:8X} [{:X}]
+    import address table directory : {:8X} [{:X}]
+    delay import directory         : {:8X} [{:X}]
+    COM descriptor directory       : {:8X} [{:X}]
+    reserved directory             : {:8X} [{:X}]\
     ",
         optional_header.size_of_stack_reserve(),
         optional_header.size_of_stack_commit(),
