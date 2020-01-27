@@ -21,7 +21,7 @@ fn main() -> Result<(), failure::Error> {
   let container = Container::create(&path)?;
   container.parse()?;
 
-  // You can access all of properties
-  println!("{}", container.dos_container().unwrap().is_windows_executable()); // => true
+  // You can find examples of this crate in win-analysis directory.
+  println!("{}", container.dos_header().unwrap().is_windows_executable()); // => true
 }
 ```
