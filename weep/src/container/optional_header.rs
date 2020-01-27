@@ -204,6 +204,7 @@ impl OptionalHeader {
         }
     }
 
+    // TODO: see number_of_rva_and_sizes for the feature
     fn parse_data_directories(container: &mut Container, mut offset: &mut usize) -> Result<[DataDirectory; NUMBER_OF_DATA_DIRECTORIES], failure::Error> {
         fn read_dictionary_data(container: &Container, mut offset: &mut usize) -> Result<DataDirectory, failure::Error> {
             container.buffer().gread_with::<DataDirectory>(&mut offset, LE).map_err(|_| {
