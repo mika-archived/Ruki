@@ -1,8 +1,9 @@
 use std::convert::TryInto;
 use std::fs::File;
-use std::io::{BufReader, Read, Seek, SeekFrom};
+use std::io::Read;
 use std::path::Path;
 
+mod com_descriptor_directory;
 mod data_directory;
 mod debug_directory;
 mod dos_header;
@@ -10,6 +11,7 @@ mod file_header;
 mod optional_header;
 mod section_header;
 
+use com_descriptor_directory::Cor20Header;
 use data_directory::DataDirectory;
 use debug_directory::DebugInformation;
 use dos_header::DosHeader;
@@ -21,7 +23,6 @@ use section_header::SectionHeader;
 pub struct Container {
     path: String,
     buffer: Vec<u8>,
-    reader: BufReader<File>,
 
     dos_header: Option<DosHeader>,
     file_header: Option<FileHeader>,
@@ -42,7 +43,7 @@ pub struct Container {
     bound_import_data: Option<()>,
     entry_iat_data: Option<()>,
     delay_import_data: Option<()>,
-    com_descriptor_data: Option<()>,
+    com_descriptor_data: Option<Cor20Header>,
     // reserved: Option<()>,
 }
 
@@ -57,14 +58,10 @@ impl Container {
         };
         let mut buffer = Vec::new();
         executable.read_to_end(&mut buffer)?;
-        executable.seek(SeekFrom::Start(0))?;
-
-        let reader = BufReader::new(executable);
 
         Ok(Container {
             path: path.to_str().unwrap().to_owned(),
             buffer,
-            reader,
 
             // headers
             dos_header: None,
@@ -95,6 +92,10 @@ impl Container {
     pub fn buffer(&self) -> &[u8] {
         let array: &[u8] = self.buffer[..].try_into().unwrap();
         return array;
+    }
+
+    pub fn com_descriptor_data(&self) -> Option<&Cor20Header> {
+        self.com_descriptor_data.as_ref()
     }
 
     pub fn dos_header(&self) -> Option<&DosHeader> {
@@ -150,7 +151,7 @@ impl Container {
         // directories
         // TODO other data
         self.debug_information = Some(DebugInformation::parse(self)?);
-        // self.debug_data = Some(self.parse_debug_data()?);
+        self.com_descriptor_data = Some(Cor20Header::parse(self)?);
 
         Ok(())
     }
