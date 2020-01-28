@@ -1,6 +1,6 @@
 use scroll::{Pread, LE};
 
-use super::Container;
+use crate::container::Container;
 
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Default, Pread)]

@@ -3,21 +3,8 @@ use std::fs::File;
 use std::io::Read;
 use std::path::Path;
 
-mod com_descriptor_directory;
-mod data_directory;
-mod debug_directory;
-mod dos_header;
-mod file_header;
-mod optional_header;
-mod section_header;
-
-use com_descriptor_directory::Cor20Header;
-use data_directory::DataDirectory;
-use debug_directory::DebugInformation;
-use dos_header::DosHeader;
-use file_header::FileHeader;
-use optional_header::OptionalHeader;
-use section_header::SectionHeader;
+use crate::directories::{Cor20Header, DataDirectory, DebugInformation};
+use crate::headers::{DosHeader, FileHeader, OptionalHeader, SectionHeader};
 
 #[derive(Debug)]
 pub struct Container {
@@ -156,7 +143,7 @@ impl Container {
         Ok(())
     }
 
-    pub(in crate::container) fn in_section(&self, directory: &DataDirectory) -> Option<&SectionHeader> {
+    pub(in crate) fn in_section(&self, directory: &DataDirectory) -> Option<&SectionHeader> {
         let number_of_sections = self.file_header().unwrap().number_of_sections();
         let address = directory.virtual_address();
 
@@ -173,7 +160,7 @@ impl Container {
         None
     }
 
-    pub(in crate::container) fn rva_to_file_pointer(&self, rva: u32, section: &SectionHeader) -> usize {
+    pub(in crate) fn rva_to_file_pointer(&self, rva: u32, section: &SectionHeader) -> usize {
         (rva - section.virtual_address() + section.pointer_to_raw_data()).try_into().unwrap()
     }
 }

@@ -1,7 +1,7 @@
 use scroll::{ctx, Endian, Pread, LE};
 
-use super::Container;
 use crate::guid::GUID;
+use crate::Container;
 
 const DEBUG_INDEX: usize = 6;
 const BYTES_OF_DEBUG_DIRECTORY: u32 = 28;

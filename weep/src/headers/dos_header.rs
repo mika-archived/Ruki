@@ -1,6 +1,6 @@
 use scroll::{Pread, LE};
 
-use super::Container;
+use crate::container::Container;
 
 #[derive(Debug)]
 pub struct DosHeader {

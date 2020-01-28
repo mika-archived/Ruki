@@ -1,7 +1,7 @@
 use scroll::{Pread, LE};
 
 use super::data_directory::DataDirectory;
-use super::Container;
+use crate::Container;
 
 const COR20_INDEX: usize = 14;
 
@@ -50,3 +50,7 @@ impl Cor20Header {
     }
 }
 
+#[derive(Debug)]
+pub struct ComDescriptor {
+    cor20_header: Cor20Header,
+}
