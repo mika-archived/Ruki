@@ -1,9 +1,8 @@
 use scroll::{Pread, LE};
 
-use super::data_directory::DataDirectory;
-use crate::Container;
-
-const COR20_INDEX: usize = 14;
+use crate::constant::IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR;
+use crate::directories::DataDirectory;
+use crate::Executable;
 
 // .NET CLR Header / This header may be change in the future.
 #[repr(C)]
@@ -24,15 +23,15 @@ pub struct Cor20Header {
 }
 
 impl Cor20Header {
-    pub fn parse(container: &Container) -> Result<Self, failure::Error> {
-        let com_descriptor = container.optional_header().unwrap().data_directories()[COR20_INDEX];
+    pub fn parse(executable: &Executable) -> Result<Option<Self>, failure::Error> {
+        let com_descriptor = executable.optional_header().unwrap().data_directories()[IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR as usize];
         let com_dir_size = com_descriptor.size();
 
         if com_dir_size == 0 {
-            return Ok(Default::default());
+            return Ok(None);
         }
 
-        let section = match container.in_section(com_descriptor) {
+        let section = match executable.in_section(com_descriptor) {
             Some(section) => section,
             None => {
                 let msg = "Failed to read debug directory data";
@@ -40,17 +39,12 @@ impl Cor20Header {
             }
         };
 
-        let offset = container.rva_to_file_pointer(com_descriptor.virtual_address(), section);
-        let cor20_header = container.buffer().pread_with::<Cor20Header>(offset, LE).map_err(|_| {
+        let offset = executable.rva_to_file_pointer(com_descriptor.virtual_address(), section);
+        let cor20_header = executable.buffer().pread_with::<Cor20Header>(offset, LE).map_err(|_| {
             let msg = format!("Failed to read the IMAGE_COR20_HEADER at {:#X}", offset);
             return failure::err_msg(msg);
         })?;
 
-        Ok(cor20_header)
+        Ok(Some(cor20_header))
     }
-}
-
-#[derive(Debug)]
-pub struct ComDescriptor {
-    cor20_header: Cor20Header,
 }

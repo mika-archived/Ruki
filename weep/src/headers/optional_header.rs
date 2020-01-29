@@ -1,7 +1,7 @@
 use std::convert::TryInto;
 
-use crate::container::Container;
 use crate::directories::DataDirectory;
+use crate::Executable;
 
 use scroll::{Pread, LE};
 
@@ -116,16 +116,16 @@ pub struct OptionalHeader {
 }
 
 impl OptionalHeader {
-    pub fn parse(container: &mut Container, mut offset: &mut usize) -> Result<OptionalHeader, failure::Error> {
-        let machine = container.file_header().unwrap().machine();
+    pub fn parse(executable: &mut Executable, mut offset: &mut usize) -> Result<OptionalHeader, failure::Error> {
+        let machine = executable.file_header().unwrap().machine();
 
         if machine == X64_MACHINE {
-            let optional_header = container.buffer().gread_with::<OptionalHeader64>(&mut offset, LE).map_err(|_| {
+            let optional_header = executable.buffer().gread_with::<OptionalHeader64>(&mut offset, LE).map_err(|_| {
                 let msg = format!("Failed to read the OPTIONAL_HEADER_64 at {:#X}", offset);
                 return failure::err_msg(msg);
             })?;
 
-            let data_directory = OptionalHeader::parse_data_directories(container, &mut offset)?;
+            let data_directory = OptionalHeader::parse_data_directories(executable, &mut offset)?;
 
             return Ok(OptionalHeader {
                 magic: optional_header.magic,
@@ -161,12 +161,12 @@ impl OptionalHeader {
                 data_directory,
             });
         } else {
-            let optional_header = container.buffer().gread_with::<OptionalHeader32>(&mut offset, LE).map_err(|_| {
+            let optional_header = executable.buffer().gread_with::<OptionalHeader32>(&mut offset, LE).map_err(|_| {
                 let msg = format!("Failed to read the OPTIONAL_HEADER_64 at {:#X}", offset);
                 return failure::err_msg(msg);
             })?;
 
-            let data_directory = OptionalHeader::parse_data_directories(container, &mut offset)?;
+            let data_directory = OptionalHeader::parse_data_directories(executable, &mut offset)?;
 
             return Ok(OptionalHeader {
                 magic: optional_header.magic,
@@ -205,30 +205,30 @@ impl OptionalHeader {
     }
 
     // TODO: see number_of_rva_and_sizes for the feature
-    fn parse_data_directories(container: &mut Container, mut offset: &mut usize) -> Result<[DataDirectory; NUMBER_OF_DATA_DIRECTORIES], failure::Error> {
-        fn read_dictionary_data(container: &Container, mut offset: &mut usize) -> Result<DataDirectory, failure::Error> {
-            container.buffer().gread_with::<DataDirectory>(&mut offset, LE).map_err(|_| {
+    fn parse_data_directories(executable: &mut Executable, mut offset: &mut usize) -> Result<[DataDirectory; NUMBER_OF_DATA_DIRECTORIES], failure::Error> {
+        fn read_dictionary_data(executable: &Executable, mut offset: &mut usize) -> Result<DataDirectory, failure::Error> {
+            executable.buffer().gread_with::<DataDirectory>(&mut offset, LE).map_err(|_| {
                 let msg = format!("Failed to read the DATA_DIRECTORY at {:#X}", offset);
                 return failure::err_msg(msg);
             })
         }
 
-        let export = read_dictionary_data(container, &mut offset)?;
-        let import = read_dictionary_data(container, &mut offset)?;
-        let resource = read_dictionary_data(container, &mut offset)?;
-        let exception = read_dictionary_data(container, &mut offset)?;
-        let security = read_dictionary_data(container, &mut offset)?;
-        let basereloc = read_dictionary_data(container, &mut offset)?;
-        let debug = read_dictionary_data(container, &mut offset)?;
-        let architecture = read_dictionary_data(container, &mut offset)?;
-        let global_ptr = read_dictionary_data(container, &mut offset)?;
-        let tls = read_dictionary_data(container, &mut offset)?;
-        let load_config = read_dictionary_data(container, &mut offset)?;
-        let bound_import = read_dictionary_data(container, &mut offset)?;
-        let entry_iat = read_dictionary_data(container, &mut offset)?;
-        let delay_import = read_dictionary_data(container, &mut offset)?;
-        let com_descriptor = read_dictionary_data(container, &mut offset)?; // a.k.a .NET CLR Descriptor
-        let reserved = read_dictionary_data(container, &mut offset)?;
+        let export = read_dictionary_data(executable, &mut offset)?;
+        let import = read_dictionary_data(executable, &mut offset)?;
+        let resource = read_dictionary_data(executable, &mut offset)?;
+        let exception = read_dictionary_data(executable, &mut offset)?;
+        let security = read_dictionary_data(executable, &mut offset)?;
+        let basereloc = read_dictionary_data(executable, &mut offset)?;
+        let debug = read_dictionary_data(executable, &mut offset)?;
+        let architecture = read_dictionary_data(executable, &mut offset)?;
+        let global_ptr = read_dictionary_data(executable, &mut offset)?;
+        let tls = read_dictionary_data(executable, &mut offset)?;
+        let load_config = read_dictionary_data(executable, &mut offset)?;
+        let bound_import = read_dictionary_data(executable, &mut offset)?;
+        let entry_iat = read_dictionary_data(executable, &mut offset)?;
+        let delay_import = read_dictionary_data(executable, &mut offset)?;
+        let com_descriptor = read_dictionary_data(executable, &mut offset)?; // a.k.a .NET CLR Descriptor
+        let reserved = read_dictionary_data(executable, &mut offset)?;
 
         return Ok([
             export,

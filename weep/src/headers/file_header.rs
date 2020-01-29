@@ -1,6 +1,6 @@
 use scroll::{Pread, LE};
 
-use crate::container::Container;
+use crate::Executable;
 
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Default, Pread)]
@@ -16,9 +16,9 @@ pub struct FileHeader {
 }
 
 impl FileHeader {
-    pub fn parse(container: &mut Container, mut offset: &mut usize) -> Result<FileHeader, failure::Error> {
-        *offset += container.dos_header().unwrap().addr_of_nt_header() as usize;
-        let signature = container.buffer().gread_with::<u32>(&mut offset, LE).map_err(|_| {
+    pub fn parse(executable: &mut Executable, mut offset: &mut usize) -> Result<FileHeader, failure::Error> {
+        *offset += executable.dos_header().unwrap().addr_of_nt_header() as usize;
+        let signature = executable.buffer().gread_with::<u32>(&mut offset, LE).map_err(|_| {
             let msg = format!("Could not parse PE header at {:#X}", offset);
             return failure::err_msg(msg);
         })?;
@@ -27,7 +27,7 @@ impl FileHeader {
             return Ok(FileHeader { ..Default::default() });
         }
 
-        let file_header = container.buffer().gread_with::<FileHeader>(&mut offset, LE).map_err(|_| {
+        let file_header = executable.buffer().gread_with::<FileHeader>(&mut offset, LE).map_err(|_| {
             let msg = format!("Failed to read the FILE_HEADER at {:#X}", offset);
             return failure::err_msg(msg);
         })?;

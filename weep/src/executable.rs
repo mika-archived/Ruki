@@ -3,11 +3,12 @@ use std::fs::File;
 use std::io::Read;
 use std::path::Path;
 
-use crate::directories::{Cor20Header, DataDirectory, DebugInformation};
+use crate::containers::{ComDescriptor, DebugContainer};
+use crate::directories::DataDirectory;
 use crate::headers::{DosHeader, FileHeader, OptionalHeader, SectionHeader};
 
 #[derive(Debug)]
-pub struct Container {
+pub struct Executable {
     path: String,
     buffer: Vec<u8>,
 
@@ -22,7 +23,7 @@ pub struct Container {
     exception_data: Option<()>,
     security_data: Option<()>,
     base_relocation_data: Option<()>,
-    debug_information: Option<Vec<DebugInformation>>,
+    debug_data: Option<Vec<DebugContainer>>,
     architecture_data: Option<()>,
     global_pointer_data: Option<()>,
     tls_data: Option<()>,
@@ -30,12 +31,12 @@ pub struct Container {
     bound_import_data: Option<()>,
     entry_iat_data: Option<()>,
     delay_import_data: Option<()>,
-    com_descriptor_data: Option<Cor20Header>,
+    com_descriptor_data: Option<ComDescriptor>,
     // reserved: Option<()>,
 }
 
-impl Container {
-    pub fn create(path: &Path) -> Result<Container, failure::Error> {
+impl Executable {
+    pub fn new(path: &Path) -> Result<Self, failure::Error> {
         let mut executable = match File::open(path) {
             Ok(executable) => executable,
             Err(e) => {
@@ -46,7 +47,7 @@ impl Container {
         let mut buffer = Vec::new();
         executable.read_to_end(&mut buffer)?;
 
-        Ok(Container {
+        Ok(Executable {
             path: path.to_str().unwrap().to_owned(),
             buffer,
 
@@ -63,7 +64,7 @@ impl Container {
             exception_data: None,
             security_data: None,
             base_relocation_data: None,
-            debug_information: None,
+            debug_data: None,
             architecture_data: None,
             global_pointer_data: None,
             tls_data: None,
@@ -81,7 +82,7 @@ impl Container {
         return array;
     }
 
-    pub fn com_descriptor_data(&self) -> Option<&Cor20Header> {
+    pub fn com_descriptor_data(&self) -> Option<&ComDescriptor> {
         self.com_descriptor_data.as_ref()
     }
 
@@ -104,9 +105,9 @@ impl Container {
         }
     }
 
-    pub fn debug_information(&self) -> Option<Vec<&DebugInformation>> {
-        match &self.debug_information {
-            Some(debug_information) => Some(debug_information.iter().map(|s| s).collect()),
+    pub fn debug_data(&self) -> Option<Vec<&DebugContainer>> {
+        match &self.debug_data {
+            Some(debug_data) => Some(debug_data.iter().map(|s| s).collect()),
             None => None,
         }
     }
@@ -137,8 +138,8 @@ impl Container {
 
         // directories
         // TODO other data
-        self.debug_information = Some(DebugInformation::parse(self)?);
-        self.com_descriptor_data = Some(Cor20Header::parse(self)?);
+        self.debug_data = DebugContainer::parse(self)?;
+        self.com_descriptor_data = ComDescriptor::parse(self)?;
 
         Ok(())
     }

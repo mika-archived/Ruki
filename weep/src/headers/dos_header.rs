@@ -1,6 +1,6 @@
 use scroll::{Pread, LE};
 
-use crate::container::Container;
+use crate::Executable;
 
 #[derive(Debug)]
 pub struct DosHeader {
@@ -9,8 +9,8 @@ pub struct DosHeader {
 }
 
 impl DosHeader {
-    pub fn parse(container: &mut Container) -> Result<DosHeader, failure::Error> {
-        let signature = container.buffer().pread_with::<u16>(0, LE).map_err(|_| {
+    pub fn parse(executable: &mut Executable) -> Result<DosHeader, failure::Error> {
+        let signature = executable.buffer().pread_with::<u16>(0, LE).map_err(|_| {
             let msg = format!("Could not parse DOS signature at {:#X}", 0);
             return failure::err_msg(msg);
         })?;
@@ -22,7 +22,7 @@ impl DosHeader {
             });
         }
 
-        let addr_of_nt_header = container.buffer().pread_with::<i32>(0x3C, LE).map_err(|_| {
+        let addr_of_nt_header = executable.buffer().pread_with::<i32>(0x3C, LE).map_err(|_| {
             let msg = format!("Could not parse PE header pointer at {:#X}", 0x3C);
             return failure::err_msg(msg);
         })?;

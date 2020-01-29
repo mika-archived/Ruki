@@ -1,6 +1,6 @@
 use scroll::{Pread, LE};
 
-use crate::container::Container;
+use crate::Executable;
 
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Default, Pread)]
@@ -18,8 +18,8 @@ pub struct SectionHeader {
 }
 
 impl SectionHeader {
-    pub fn parse(container: &Container, mut offset: &mut usize) -> Result<Self, failure::Error> {
-        let section_header = container.buffer().gread_with::<SectionHeader>(&mut offset, LE).map_err(|_| {
+    pub fn parse(executable: &Executable, mut offset: &mut usize) -> Result<Self, failure::Error> {
+        let section_header = executable.buffer().gread_with::<SectionHeader>(&mut offset, LE).map_err(|_| {
             let msg = format!("Failed to read SECTION_HEADER at {:#X}", offset);
             return failure::err_msg(msg);
         })?;
