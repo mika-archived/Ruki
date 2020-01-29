@@ -3,7 +3,7 @@ use std::fs::File;
 use std::io::Read;
 use std::path::Path;
 
-use crate::containers::{ComDescriptor, DebugContainer};
+use crate::containers::{ComDescriptor, DebugContainer, ExportContainer};
 use crate::directories::DataDirectory;
 use crate::headers::{DosHeader, FileHeader, OptionalHeader, SectionHeader};
 
@@ -17,7 +17,7 @@ pub struct Executable {
     optional_header: Option<OptionalHeader>,
     section_headers: Option<Vec<SectionHeader>>,
 
-    export_data: Option<()>,
+    export_data: Option<ExportContainer>,
     import_data: Option<()>,
     resource_data: Option<()>,
     exception_data: Option<()>,
@@ -138,6 +138,7 @@ impl Executable {
 
         // directories
         // TODO other data
+        self.export_data = ExportContainer::parse(self)?;
         self.debug_data = DebugContainer::parse(self)?;
         self.com_descriptor_data = ComDescriptor::parse(self)?;
 

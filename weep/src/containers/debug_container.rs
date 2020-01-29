@@ -75,7 +75,7 @@ impl DebugContainer {
         let section = match executable.in_section(data_directory) {
             Some(section) => section,
             None => {
-                let msg = "Failed to read debug directory data";
+                let msg = "Failed to read debug directory";
                 return Err(failure::err_msg(msg));
             }
         };
