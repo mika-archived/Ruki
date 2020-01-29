@@ -1,4 +1,4 @@
-# weep
+# Roki
 
 This crate provides parser function for Windows Portable Executable (PE) File.
 
@@ -8,20 +8,20 @@ Add this to your `Cargo.toml`
 
 ```toml
 [dependencies]
-weep = "0.1"
+roki = "0.1"
 ```
 
 ## Example
 
 ```rust
-use windows_executable_parser::Container;
+use roki::Executable;
 
-fn main() -> Result<(), failure::Error> {
+fn main() -> Result<(), exitfailure::ExitFailure> {
   let path = Path::new("./path/to/windows/executable.dll");
-  let container = Container::create(&path)?;
-  container.parse()?;
+  let mut executable = Executable::new(&path)?;
+  executable.parse()?;
 
   // You can find examples of this crate in win-analysis directory.
-  println!("{}", container.dos_header().unwrap().is_windows_executable()); // => true
+  println!("{}", executable.dos_header().unwrap().is_windows_executable()); // => true
 }
 ```
