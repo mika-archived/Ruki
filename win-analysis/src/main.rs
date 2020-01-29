@@ -2,7 +2,7 @@ use std::env;
 use std::path::Path;
 
 use exitfailure::ExitFailure;
-use weep::Container;
+use weep::Executable;
 
 fn main() -> Result<(), ExitFailure> {
     let args: Vec<String> = env::args().collect();
@@ -36,22 +36,22 @@ fn parse(path: &str) -> Result<(), failure::Error> {
     }
 
     // create EXE container
-    let mut container = Container::create(path)?;
-    container.parse()?;
+    let mut executable = Executable::new(path)?;
+    executable.parse()?;
 
     println!("Dump of file {}\n", path.file_name().unwrap().to_str().unwrap());
 
-    if container.dos_header().unwrap().is_windows_executable() {
+    if executable.dos_header().unwrap().is_windows_executable() {
         println!("DOS signature found");
     }
 
-    if container.file_header().unwrap().is_portable_executable() {
+    if executable.file_header().unwrap().is_portable_executable() {
         println!("PE signature found");
     }
 
-    print_file_headers(&container);
-    print_optional_headers(&container);
-    print_section_headers(&container);
+    print_file_headers(&executable);
+    print_optional_headers(&executable);
+    print_section_headers(&executable);
 
     // print_import_directory(&container);
     // print_export_directory(&container);
@@ -59,7 +59,7 @@ fn parse(path: &str) -> Result<(), failure::Error> {
     // print_exception_directory(&container);
     // print_security_directory(&container);
     // print_relocation_directory(&container);
-    print_debug_directory(&container);
+    print_debug_directory(&executable);
     // print_architecture_directory(&container);
     // print_global_pointer_directory(&container);
     // print_tls_directory(&container);
@@ -67,12 +67,13 @@ fn parse(path: &str) -> Result<(), failure::Error> {
     // print_bound_import_directory(&container);
     // print_entry_iat_directory(&container);
     // print_delay_import_directory(&container);
+    print_com_descriptor_directory(&executable);
 
     Ok(())
 }
 
-fn print_file_headers(container: &Container) -> () {
-    let file_header = container.file_header().unwrap();
+fn print_file_headers(executable: &Executable) -> () {
+    let file_header = executable.file_header().unwrap();
 
     let machine = match file_header.machine() {
         0x014C => "x86",
@@ -130,8 +131,8 @@ FILE HEADER VALUES
     }
 }
 
-fn print_optional_headers(container: &Container) -> () {
-    let optional_header = container.optional_header().unwrap();
+fn print_optional_headers(executable: &Executable) -> () {
+    let optional_header = executable.optional_header().unwrap();
 
     let magic = match optional_header.magic() {
         0x10b => "PE32  (x86)",
@@ -299,9 +300,9 @@ OPTIONAL HEADER VALUES
     )
 }
 
-fn print_section_headers(container: &Container) -> () {
-    let file_header = container.file_header().unwrap();
-    let section_headers = container.section_headers().unwrap();
+fn print_section_headers(executable: &Executable) -> () {
+    let file_header = executable.file_header().unwrap();
+    let section_headers = executable.section_headers().unwrap();
 
     for i in 0..file_header.number_of_sections() {
         let section_header = &section_headers[i as usize];
@@ -389,16 +390,16 @@ SECTION HEADER #{}
     }
 }
 
-fn print_debug_directory(container: &Container) -> () {
+fn print_debug_directory(executable: &Executable) -> () {
     println!("\n********************  Debug Directory ********************");
 
-    let debug_information = match container.debug_information() {
-        Some(debug_information) => debug_information,
+    let debug_data = match executable.debug_data() {
+        Some(debug_data) => debug_data,
         None => return,
     };
 
-    for i in 0..debug_information.len() {
-        let debug_container = debug_information[i];
+    for i in 0..debug_data.len() {
+        let debug_container = debug_data[i];
         let directory = debug_container.directory();
 
         let format = match directory.r#type() {
@@ -465,4 +466,10 @@ DEBUG INFORMATION #{}
             )
         }
     }
+}
+
+fn print_com_descriptor_directory(executable: &Executable) -> () {
+    let com_descriptor = executable.com_descriptor_data();
+
+    dbg!(&com_descriptor);
 }
