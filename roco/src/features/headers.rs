@@ -1,78 +1,12 @@
-use std::env;
-use std::path::Path;
+use roki::Executable;
 
-use exitfailure::ExitFailure;
-use weep::Executable;
-
-fn main() -> Result<(), ExitFailure> {
-    let args: Vec<String> = env::args().collect();
-
-    match args.len() {
-        1 => usage(),
-        2 => parse(&args.get(1).unwrap())?,
-        _ => {}
-    };
-
-    Ok(())
+pub fn print(executable: &Executable) -> () {
+    print_file_header(executable);
+    print_optional_header(executable);
+    print_section_headers(executable);
 }
 
-fn usage() {
-    print!(
-        "\
-WinAnalysis - Parsing Windows Portable Executable File and dump it
-
-USAGE:
-    win-analysis [Windows Executable]"
-    );
-}
-
-fn parse(path: &str) -> Result<(), failure::Error> {
-    let path = Path::new(path);
-
-    // check file existence
-    if !path.exists() || !path.is_file() {
-        let msg = format!("Path `{}` is no such file or executable file", path.display());
-        return Err(failure::err_msg(msg));
-    }
-
-    // create EXE container
-    let mut executable = Executable::new(path)?;
-    executable.parse()?;
-
-    println!("Dump of file {}\n", path.file_name().unwrap().to_str().unwrap());
-
-    if executable.dos_header().unwrap().is_windows_executable() {
-        println!("DOS signature found");
-    }
-
-    if executable.file_header().unwrap().is_portable_executable() {
-        println!("PE signature found");
-    }
-
-    print_file_headers(&executable);
-    print_optional_headers(&executable);
-    print_section_headers(&executable);
-
-    // print_import_directory(&container);
-    // print_export_directory(&container);
-    // print_resource_directory(&container);
-    // print_exception_directory(&container);
-    // print_security_directory(&container);
-    // print_relocation_directory(&container);
-    print_debug_directory(&executable);
-    // print_architecture_directory(&container);
-    // print_global_pointer_directory(&container);
-    // print_tls_directory(&container);
-    // print_load_config_directory(&container);
-    // print_bound_import_directory(&container);
-    // print_entry_iat_directory(&container);
-    // print_delay_import_directory(&container);
-    print_com_descriptor_directory(&executable);
-
-    Ok(())
-}
-
-fn print_file_headers(executable: &Executable) -> () {
+fn print_file_header(executable: &Executable) -> () {
     let file_header = executable.file_header().unwrap();
 
     let machine = match file_header.machine() {
@@ -131,7 +65,7 @@ FILE HEADER VALUES
     }
 }
 
-fn print_optional_headers(executable: &Executable) -> () {
+fn print_optional_header(executable: &Executable) -> () {
     let optional_header = executable.optional_header().unwrap();
 
     let magic = match optional_header.magic() {
@@ -388,88 +322,4 @@ SECTION HEADER #{}
             println!("        {}", flag);
         }
     }
-}
-
-fn print_debug_directory(executable: &Executable) -> () {
-    println!("\n********************  Debug Directory ********************");
-
-    let debug_data = match executable.debug_data() {
-        Some(debug_data) => debug_data,
-        None => return,
-    };
-
-    for i in 0..debug_data.len() {
-        let debug_container = debug_data[i];
-        let directory = debug_container.directory();
-
-        let format = match directory.r#type() {
-            1 => "COFF",
-            2 => "CodeView",
-            3 => "FPO",
-            4 => "Miscellaneous",
-            5 => "Exception",
-            6 => "Fixup",
-            7 => "To src",
-            8 => "From src",
-            9 => "Borland",
-            10 => "RESERVED10",
-            11 => "CLSID",
-            12 => "VC Feature",
-            13 => "POGO",
-            14 => "ILTCG",
-            15 => "MPX",
-            16 => "Repro",
-            _ => "Unknown",
-        };
-
-        println!(
-            "
-DEBUG INFORMATION #{}
-    type                : {}
-    version             : {}.{}
-    timestamp           : {:X}
-    characteristics     : {:X}
-    size                : {}
-    RVA                 : {:X}
-    offset              : {:X}\
-        ",
-            i,
-            format,
-            directory.major_version(),
-            directory.minor_version(),
-            directory.time_date_stamp(),
-            directory.characteristics(),
-            directory.size_of_data(),
-            directory.address_of_raw_data(),
-            directory.pointer_to_raw_data(),
-        );
-
-        // CodeView has more data
-        if directory.r#type() == 0x02 {
-            let code_view = debug_container.code_view().unwrap();
-            let format = match code_view.format() {
-                // seel: https://github.com/llvm/llvm-project/blob/77e6bb3cbad26f0a95be5c427fa7f87833d5843e/llvm/include/llvm/Object/CVDebugRecord.h#L18-L21
-                0x53445352 => "RSDS (PDB 7.0)",
-                _ => "Unsupported",
-            };
-
-            println!(
-                "    code view format    : {}
-    GUID                : {}
-    age                 : {}
-    PDB path            : {}\
-    ",
-                format,
-                code_view.guid(),
-                code_view.age(),
-                code_view.path()
-            )
-        }
-    }
-}
-
-fn print_com_descriptor_directory(executable: &Executable) -> () {
-    let com_descriptor = executable.com_descriptor_data();
-
-    dbg!(&com_descriptor);
 }

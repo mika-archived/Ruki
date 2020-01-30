@@ -2,6 +2,7 @@
 name = "win-analysis"
 version = "0.1.0"
 authors = ["Mikazuki <mikazuki_fuyuno@outlook.com>"]
+description = "Parse Windows Portable Executable (PE) File and dump it."
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -10,6 +11,7 @@ path = "src/main.rs"
 name = "win-analysis"
 
 [dependencies]
+clap = "2"
 exitfailure = "0.5"
 failure = "0.1"
 roki = { version = "0.1", path = "../roki" }
