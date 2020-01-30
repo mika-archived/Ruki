@@ -106,4 +106,15 @@ impl ExportContainer {
 
         Ok(Some(ExportContainer { directory, functions: Some(vector) }))
     }
+
+    pub fn directory(&self) -> &ExportDirectory {
+        &self.directory
+    }
+
+    pub fn functions(&self) -> Option<Vec<&Function>> {
+        match &self.functions {
+            Some(functions) => Some(functions.iter().map(|w| w).collect()),
+            None => None,
+        }
+    }
 }

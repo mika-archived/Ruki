@@ -86,8 +86,19 @@ impl Executable {
         self.com_descriptor_data.as_ref()
     }
 
+    pub fn debug_data(&self) -> Option<Vec<&DebugContainer>> {
+        match &self.debug_data {
+            Some(debug_data) => Some(debug_data.iter().map(|s| s).collect()),
+            None => None,
+        }
+    }
+
     pub fn dos_header(&self) -> Option<&DosHeader> {
         self.dos_header.as_ref()
+    }
+
+    pub fn export_data(&self) -> Option<&ExportContainer> {
+        self.export_data.as_ref()
     }
 
     pub fn file_header(&self) -> Option<&FileHeader> {
@@ -101,13 +112,6 @@ impl Executable {
     pub fn section_headers(&self) -> Option<Vec<&SectionHeader>> {
         match &self.section_headers {
             Some(section_headers) => Some(section_headers.iter().map(|s| s).collect()),
-            None => None,
-        }
-    }
-
-    pub fn debug_data(&self) -> Option<Vec<&DebugContainer>> {
-        match &self.debug_data {
-            Some(debug_data) => Some(debug_data.iter().map(|s| s).collect()),
             None => None,
         }
     }
