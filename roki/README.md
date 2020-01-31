@@ -21,7 +21,7 @@ fn main() -> Result<(), exitfailure::ExitFailure> {
   let mut executable = Executable::new(&path)?;
   executable.parse()?;
 
-  // You can find examples of this crate in win-analysis directory.
+  // You can find examples of this crate in ../roco directory.
   println!("{}", executable.dos_header().unwrap().is_windows_executable()); // => true
 }
 ```
