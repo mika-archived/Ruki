@@ -1,4 +1,4 @@
-# win-analysis
+# Roco
 
 Parse Windows Portable Executable (PE) File and dump it.
 
@@ -6,5 +6,5 @@ Parse Windows Portable Executable (PE) File and dump it.
 ## Usage
 
 ```bash
-> win-analysis /path/to/executable.dll
+> roco /path/to/executable.dll --headers
 ```
