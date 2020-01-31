@@ -37,11 +37,11 @@ pub fn print(executable: &Executable) -> () {
     DEBUG INFORMATION #{}
         type                : {}
         version             : {}.{}
-        timestamp           : {:X}
-        characteristics     : {:X}
+        timestamp           : {:#010X}
+        characteristics     : {:#010X}
         size                : {}
-        RVA                 : {:X}
-        offset              : {:X}\
+        RVA                 : {:#010X}
+        offset              : {:#010X}\
         ",
             i,
             format,

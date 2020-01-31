@@ -42,13 +42,13 @@ fn print_file_header(executable: &Executable) -> () {
     println!(
         "
 FILE HEADER VALUES
-    machine                      : {:X} ({})
-    number of sections           : {:X}
-    time date stamps             : {:X}
-    file pointer to symbol table : {:X}
-    number of symbols            : {:X}
-    size of optional header      : {:X}
-    characteristics              : {:X}\
+    machine                      : {:#06X} ({})
+    number of sections           : {:#010X}
+    time date stamps             : {:#010X}
+    file pointer to symbol table : {:#010X}
+    number of symbols            : {:#010X}
+    size of optional header      : {:#010X}
+    characteristics              : {:#010X}\
     ",
         file_header.machine(),
         machine,
@@ -116,26 +116,26 @@ fn print_optional_header(executable: &Executable) -> () {
     println!(
         "
 OPTIONAL HEADER VALUES
-    magic                          : {:X} # {}
+    magic                          : {:#06X} # {}
     linker version                 : {}.{}
-    size of code                   : {:X}
-    size of initialized data       : {:X}
-    size of uninitialized data     : {:X}
-    entry point                    : {:X}
-    base of code                   : {:X}
-    base of data                   : {:X}
-    image base                     : {:X}
-    section alignment              : {:X}
-    file alignment                 : {:X}
+    size of code                   : {:#010X}
+    size of initialized data       : {:#010X}
+    size of uninitialized data     : {:#010X}
+    entry point                    : {:#010X}
+    base of code                   : {:#010X}
+    base of data                   : {:#010X}
+    image base                     : {:#014X}
+    section alignment              : {:#010X}
+    file alignment                 : {:#010X}
     operating system version       : {}.{}
     image version                  : {}.{}
     subsystem version              : {}.{}
     Win32 version                  : {}
-    size of image                  : {:X}
-    size of headers                : {:X}
-    checksum                       : {:X}
-    subsystem                      : {:X} ({})
-    DLL characteristics            : {:X}\
+    size of image                  : {:#010X}
+    size of headers                : {:#010X}
+    checksum                       : {:#010X}
+    subsystem                      : {:#06X} ({})
+    DLL characteristics            : {:#010X}\
     ",
         optional_header.magic(),
         magic,
@@ -170,28 +170,28 @@ OPTIONAL HEADER VALUES
     }
 
     println!(
-        "    size of stack reserve          : {:X}
-    size of stack commit           : {:X}
-    size of heap reserve           : {:X}
-    size of heap commit            : {:X}
-    loader flags                   : {:X}
-    number of dictionaries         : {:X} 
-    export directory               : {:8X} [{:X}]
-    import directory               : {:8X} [{:X}]
-    resource directory             : {:8X} [{:X}]
-    exception directory            : {:8X} [{:X}]
-    certificates directory         : {:8X} [{:X}]
-    base relocation directory      : {:8X} [{:X}]
-    debug directory                : {:8X} [{:X}]
-    architecture directory         : {:8X} [{:X}]
-    global pointer directory       : {:8X} [{:X}]
-    thread storage directory       : {:8X} [{:X}]
-    load configuration directory   : {:8X} [{:X}]
-    bound import directory         : {:8X} [{:X}]
-    import address table directory : {:8X} [{:X}]
-    delay import directory         : {:8X} [{:X}]
-    COM descriptor directory       : {:8X} [{:X}]
-    reserved directory             : {:8X} [{:X}]\
+        "    size of stack reserve          : {:#014X}
+    size of stack commit           : {:#014X}
+    size of heap reserve           : {:#014X}
+    size of heap commit            : {:#014X}
+    loader flags                   : {:#010X}
+    number of dictionaries         : {:#06X} 
+    export directory               : {:#010X} [{:#010X}]
+    import directory               : {:#010X} [{:#010X}]
+    resource directory             : {:#010X} [{:#010X}]
+    exception directory            : {:#010X} [{:#010X}]
+    certificates directory         : {:#010X} [{:#010X}]
+    base relocation directory      : {:#010X} [{:#010X}]
+    debug directory                : {:#010X} [{:#010X}]
+    architecture directory         : {:#010X} [{:#010X}]
+    global pointer directory       : {:#010X} [{:#010X}]
+    thread storage directory       : {:#010X} [{:#010X}]
+    load configuration directory   : {:#010X} [{:#010X}]
+    bound import directory         : {:#010X} [{:#010X}]
+    import address table directory : {:#010X} [{:#010X}]
+    delay import directory         : {:#010X} [{:#010X}]
+    COM descriptor directory       : {:#010X} [{:#010X}]
+    reserved directory             : {:#010X} [{:#010X}]\
     ",
         optional_header.size_of_stack_reserve(),
         optional_header.size_of_stack_commit(),
@@ -295,15 +295,15 @@ fn print_section_headers(executable: &Executable) -> () {
             "
 SECTION HEADER #{}
     name                             : {}
-    virtual size                     : {:X}
-    virtual address                  : {:X}
-    size of raw data                 : {:X}
-    file pointer to raw data         : {:X}
-    file pointer to relocation table : {:X}
-    file pointer to line numbers     : {:X}
-    number of relocations            : {:X}
-    number of line numbers           : {:X}
-    flags                            : {:X}\
+    virtual size                     : {:#010X}
+    virtual address                  : {:#010X}
+    size of raw data                 : {:#010X}
+    file pointer to raw data         : {:#010X}
+    file pointer to relocation table : {:#010X}
+    file pointer to line numbers     : {:#010X}
+    number of relocations            : {:#010X}
+    number of line numbers           : {:#010X}
+    flags                            : {:#010X}\
         ",
             i + 1,
             section_header.name(),
