@@ -8,13 +8,13 @@ use crate::directories::ExportDirectory;
 use crate::Executable;
 
 #[derive(Debug)]
-pub struct Function {
+pub struct ExportFunction {
     name: String,
     ordinal: u32,
     function: u32,
 }
 
-impl Function {
+impl ExportFunction {
     pub fn function(&self) -> u32 {
         self.function
     }
@@ -31,7 +31,7 @@ impl Function {
 #[derive(Debug)]
 pub struct ExportContainer {
     directory: ExportDirectory,
-    functions: Option<Vec<Function>>,
+    functions: Option<Vec<ExportFunction>>,
 }
 
 impl ExportContainer {
@@ -80,7 +80,7 @@ impl ExportContainer {
             name_table.insert(ordinal, name);
         }
 
-        let mut vector: Vec<Function> = Vec::new();
+        let mut vector: Vec<ExportFunction> = Vec::new();
         for i in 0..directory.number_of_functions() {
             let address = executable.rva_to_file_pointer(directory.address_of_functions() + i * (size_of::<u32>() as u32), section);
             let function = executable.buffer().pread_with::<u32>(address, LE).map_err(|_| {
@@ -97,7 +97,7 @@ impl ExportContainer {
                 None => format!("(Ordinal {})", directory.base() + i),
             };
 
-            vector.push(Function {
+            vector.push(ExportFunction {
                 name,
                 ordinal: directory.base() + i,
                 function,
@@ -111,7 +111,7 @@ impl ExportContainer {
         &self.directory
     }
 
-    pub fn functions(&self) -> Option<Vec<&Function>> {
+    pub fn functions(&self) -> Option<Vec<&ExportFunction>> {
         match &self.functions {
             Some(functions) => Some(functions.iter().map(|w| w).collect()),
             None => None,

@@ -3,9 +3,11 @@ use std::fs::File;
 use std::io::Read;
 use std::path::Path;
 
-use crate::containers::{ComDescriptor, DebugContainer, ExportContainer};
+use crate::containers::{ComDescriptor, DebugContainer, ExportContainer, ImportContainer};
 use crate::directories::DataDirectory;
 use crate::headers::{DosHeader, FileHeader, OptionalHeader, SectionHeader};
+
+const X64_MACHINE: u16 = 0x8664;
 
 #[derive(Debug)]
 pub struct Executable {
@@ -18,7 +20,7 @@ pub struct Executable {
     section_headers: Option<Vec<SectionHeader>>,
 
     export_data: Option<ExportContainer>,
-    import_data: Option<()>,
+    import_data: Option<ImportContainer>,
     resource_data: Option<()>,
     exception_data: Option<()>,
     security_data: Option<()>,
@@ -105,6 +107,10 @@ impl Executable {
         self.file_header.as_ref()
     }
 
+    pub fn import_data(&self) -> Option<&ImportContainer> {
+        self.import_data.as_ref()
+    }
+
     pub fn optional_header(&self) -> Option<&OptionalHeader> {
         self.optional_header.as_ref()
     }
@@ -143,6 +149,7 @@ impl Executable {
         // directories
         // TODO other data
         self.export_data = ExportContainer::parse(self)?;
+        self.import_data = ImportContainer::parse(self)?;
         self.debug_data = DebugContainer::parse(self)?;
         self.com_descriptor_data = ComDescriptor::parse(self)?;
 
@@ -168,5 +175,9 @@ impl Executable {
 
     pub(in crate) fn rva_to_file_pointer(&self, rva: u32, section: &SectionHeader) -> usize {
         (rva - section.virtual_address() + section.pointer_to_raw_data()).try_into().unwrap()
+    }
+
+    pub(in crate) fn is_x64(&self) -> bool {
+        self.file_header().unwrap().machine() == X64_MACHINE
     }
 }
