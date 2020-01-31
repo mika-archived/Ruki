@@ -1,15 +1,12 @@
 # Ruki
 
-> NOTICE: This is a hobby project.
-
-ECMA-335 .NET Common Language Infrastructure (CLI) Implementation written in Rust.  
-This repository contains implementations of CLI.
+A cross-platform Windows Executable (PE32, PE32+, PE32 .NET) parser and dumper written in Rust.
 
 
 ## Projects
 
-| Name | Type        | Description                                                       |
-| ---- | ----------- | ----------------------------------------------------------------- |
-| Roco | Application | A cross-platform Windows EXE dumper                               |
-| Roki | Library     | A cross-platform Windows EXE analyzer                             |
-| Ruki | Library     | A cross-platform ECMA-335 .NET CLI Implementation written in Rust |
+| Name | Type        | Description                           |
+| ---- | ----------- | ------------------------------------- |
+| Roco | Application | A cross-platform Windows EXE dumper   |
+| Roki | Library     | A cross-platform Windows EXE analyzer |
+| Ruki | Library     | TODO                                  |
