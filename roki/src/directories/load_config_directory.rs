@@ -173,7 +173,7 @@ impl LoadConfigDirectory {
             })?)
         } else {
             LoadConfigDirectory::from_load_config_directory_32(executable.buffer().pread_with::<LoadConfigDirectory32>(offset, LE).map_err(|_| {
-                let msg = format!("Failed to read the IMAGE_LOAD_CONFIG_DIRECTORY64 at {:#010X}", offset);
+                let msg = format!("Failed to read the IMAGE_LOAD_CONFIG_DIRECTORY32 at {:#010X}", offset);
                 return failure::err_msg(msg);
             })?)
         };
