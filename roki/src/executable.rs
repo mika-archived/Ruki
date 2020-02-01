@@ -3,7 +3,7 @@ use std::fs::File;
 use std::io::Read;
 use std::path::Path;
 
-use crate::containers::{ComDescriptor, DebugContainer, ExportContainer, ImportContainer};
+use crate::containers::{ComDescriptor, DebugContainer, ExportContainer, ImportContainer, LoadConfigContainer};
 use crate::directories::DataDirectory;
 use crate::headers::{DosHeader, FileHeader, OptionalHeader, SectionHeader};
 
@@ -29,7 +29,7 @@ pub struct Executable {
     architecture_data: Option<()>,
     global_pointer_data: Option<()>,
     tls_data: Option<()>,
-    load_config_data: Option<()>,
+    load_config_data: Option<LoadConfigContainer>,
     bound_import_data: Option<()>,
     entry_iat_data: Option<()>,
     delay_import_data: Option<()>,
@@ -111,6 +111,10 @@ impl Executable {
         self.import_data.as_ref()
     }
 
+    pub fn load_config_data(&self) -> Option<&LoadConfigContainer> {
+        self.load_config_data.as_ref()
+    }
+
     pub fn optional_header(&self) -> Option<&OptionalHeader> {
         self.optional_header.as_ref()
     }
@@ -151,6 +155,7 @@ impl Executable {
         self.export_data = ExportContainer::parse(self)?;
         self.import_data = ImportContainer::parse(self)?;
         self.debug_data = DebugContainer::parse(self)?;
+        self.load_config_data = LoadConfigContainer::parse(self)?;
         self.com_descriptor_data = ComDescriptor::parse(self)?;
 
         Ok(())
