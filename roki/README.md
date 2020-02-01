@@ -1,6 +1,6 @@
 # Roki
 
-This crate provides parser function for Windows Portable Executable (PE) File.
+This crate provides parser function for Windows Portable Executable (PE32, PE32+, PE32 .NET) Format File.
 
 ## Usage
 
