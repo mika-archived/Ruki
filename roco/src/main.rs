@@ -41,6 +41,9 @@ fn run(matches: ArgMatches<'static>) -> Result<(), failure::Error> {
     if matches.is_present("imports") {
         print_imports(&executable);
     }
+    if matches.is_present("load_config") {
+        print_load_config(&executable);
+    }
 
     Ok(())
 }
