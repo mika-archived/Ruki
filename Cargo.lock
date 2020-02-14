@@ -125,6 +125,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "roco"
+version = "0.1.0"
+dependencies = [
+ "clap 2.33.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "exitfailure 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "failure 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)",
+ "roki 0.1.0",
+]
+
+[[package]]
 name = "roki"
 version = "0.1.0"
 dependencies = [
@@ -212,16 +222,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "vec_map"
 version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-
-[[package]]
-name = "win-analysis"
-version = "0.1.0"
-dependencies = [
- "clap 2.33.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "exitfailure 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "failure 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)",
- "roki 0.1.0",
-]
 
 [[package]]
 name = "winapi"
