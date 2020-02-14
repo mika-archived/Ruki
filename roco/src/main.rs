@@ -44,6 +44,9 @@ fn run(matches: ArgMatches<'static>) -> Result<(), failure::Error> {
     if matches.is_present("load_config") {
         print_load_config(&executable);
     }
+    if matches.is_present("clr_header") {
+        print_clr_header(&executable);
+    }
 
     Ok(())
 }
