@@ -1,10 +1,10 @@
-mod com_descriptor;
+mod clr_container;
 mod debug_container;
 mod export_container;
 mod import_container;
 mod load_config_container;
 
-pub use com_descriptor::*;
+pub use clr_container::*;
 pub use debug_container::*;
 pub use export_container::*;
 pub use import_container::*;

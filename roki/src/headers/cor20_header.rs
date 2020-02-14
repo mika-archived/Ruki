@@ -47,4 +47,56 @@ impl Cor20Header {
 
         Ok(Some(cor20_header))
     }
+
+    pub fn cb(&self) -> u32 {
+        self.cb
+    }
+
+    pub fn code_manager_table(&self) -> &DataDirectory {
+        &self.code_manager_table
+    }
+
+    pub fn entry_point_rva(&self) -> u32 {
+        self.entry_point_rva
+    }
+
+    pub fn entry_point_token(&self) -> u32 {
+        self.entry_point_rva
+    }
+
+    pub fn export_address_table_jumps(&self) -> &DataDirectory {
+        &self.export_address_table_jumps
+    }
+
+    pub fn flags(&self) -> u32 {
+        self.flags
+    }
+
+    pub fn major_runtime_version(&self) -> u16 {
+        self.major_runtime_version
+    }
+
+    pub fn managed_native_header(&self) -> &DataDirectory {
+        &self.managed_native_header
+    }
+
+    pub fn meta_data(&self) -> &DataDirectory {
+        &self.meta_data
+    }
+
+    pub fn minor_runtime_version(&self) -> u16 {
+        self.minor_runtime_version
+    }
+
+    pub fn resources(&self) -> &DataDirectory {
+        &self.resources
+    }
+
+    pub fn strong_name_signature(&self) -> &DataDirectory {
+        &self.strong_name_signature
+    }
+
+    pub fn v_table_fixups(&self) -> &DataDirectory {
+        &self.v_table_fixups
+    }
 }

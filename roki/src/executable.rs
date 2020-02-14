@@ -3,7 +3,7 @@ use std::fs::File;
 use std::io::Read;
 use std::path::Path;
 
-use crate::containers::{ComDescriptor, DebugContainer, ExportContainer, ImportContainer, LoadConfigContainer};
+use crate::containers::{ClrContainer, DebugContainer, ExportContainer, ImportContainer, LoadConfigContainer};
 use crate::directories::DataDirectory;
 use crate::headers::{DosHeader, FileHeader, OptionalHeader, SectionHeader};
 
@@ -33,7 +33,7 @@ pub struct Executable {
     bound_import_data: Option<()>,
     entry_iat_data: Option<()>,
     delay_import_data: Option<()>,
-    com_descriptor_data: Option<ComDescriptor>,
+    com_descriptor_data: Option<ClrContainer>,
     // reserved: Option<()>,
 }
 
@@ -84,7 +84,7 @@ impl Executable {
         return array;
     }
 
-    pub fn com_descriptor_data(&self) -> Option<&ComDescriptor> {
+    pub fn com_descriptor_data(&self) -> Option<&ClrContainer> {
         self.com_descriptor_data.as_ref()
     }
 
@@ -156,7 +156,7 @@ impl Executable {
         self.import_data = ImportContainer::parse(self)?;
         self.debug_data = DebugContainer::parse(self)?;
         self.load_config_data = LoadConfigContainer::parse(self)?;
-        self.com_descriptor_data = ComDescriptor::parse(self)?;
+        self.com_descriptor_data = ClrContainer::parse(self)?;
 
         Ok(())
     }
