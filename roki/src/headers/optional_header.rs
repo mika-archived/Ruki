@@ -204,7 +204,7 @@ impl OptionalHeader {
         }
     }
 
-    // TODO: see number_of_rva_and_sizes for the feature
+    // TODO: see number_of_rva_and_sizes for the future
     fn parse_data_directories(executable: &mut Executable, mut offset: &mut usize) -> Result<[DataDirectory; NUMBER_OF_DATA_DIRECTORIES], failure::Error> {
         fn read_dictionary_data(executable: &Executable, mut offset: &mut usize) -> Result<DataDirectory, failure::Error> {
             executable.buffer().gread_with::<DataDirectory>(&mut offset, LE).map_err(|_| {
